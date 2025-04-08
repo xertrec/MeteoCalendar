@@ -53,6 +53,7 @@ dependencies {
     implementation "org.grails.plugins:gsp"
     implementation "org.grails.plugins:mongodb"
     implementation "org.grails.plugins:scaffolding"
+    implementation 'org.grails.plugins:spring-security-core:6.1.2'
     implementation "org.springframework.boot:spring-boot-autoconfigure"
     implementation "org.springframework.boot:spring-boot-starter"
     implementation "org.springframework.boot:spring-boot-starter-actuator"
