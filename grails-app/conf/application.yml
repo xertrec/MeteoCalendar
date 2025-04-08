@@ -5,7 +5,7 @@ info:
     grailsVersion: '@info.app.grailsVersion@'
 grails:
   mongodb:
-    url: mongodb://${MONGO_HOST:localhost}:${MONGO_PORT:27017}/foo
+    url: mongodb+srv://albertoPuto:meteocalendar@cluster0.tnncour.mongodb.net/
   views:
     default:
       codec: html
