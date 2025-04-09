@@ -4,6 +4,8 @@ import grails.gorm.transactions.Transactional
 
 class BootStrap {
 
+    def springSecurityService
+
     def init = { servletContext ->
         addUsers()
     }
