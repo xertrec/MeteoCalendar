@@ -3,7 +3,7 @@ package org.udl
 import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
 
-class HolidayControllerSpec extends Specification implements ControllerUnitTest<HolidayController> {
+class CalendarControllerSpec extends Specification implements ControllerUnitTest<CalendarController> {
 
     def setup() {
     }

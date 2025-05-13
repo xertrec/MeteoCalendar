@@ -71,9 +71,9 @@ dependencies {
     testImplementation "org.seleniumhq.selenium:selenium-remote-driver:4.19.1"
     testImplementation "org.seleniumhq.selenium:selenium-support:4.19.1"
     testImplementation "org.spockframework:spock-core"
-    testImplementation "org.testcontainers:mongodb"
-    testImplementation "org.testcontainers:spock"
-    testImplementation "org.testcontainers:testcontainers"
+    testImplementation "org.testcontainers:mongodb:1.19.0"
+    testImplementation "org.testcontainers:spock:1.19.0"
+    testImplementation "org.testcontainers:testcontainers:1.19.0"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-chrome-driver:4.19.1"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-firefox-driver:4.19.1"
     testRuntimeOnly "org.seleniumhq.selenium:selenium-safari-driver:4.19.1"
@@ -82,6 +82,10 @@ dependencies {
     implementation 'org.grails.plugins:mail:4.0.0'
     implementation 'grails.bootstrap.forms:grails-bootstrap-forms:0.3.3'
     testImplementation "org.springframework.boot:spring-boot-starter-tomcat"
+    implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.1'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
 }
 
 application {
@@ -109,3 +113,4 @@ assets {
     minifyCss = true
     skipNonDigests = true
 }
+
