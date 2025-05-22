@@ -30,8 +30,9 @@ class CalendarController {
         // 1. Eventos donde el usuario es propietario
         def ownerEvents = Event.findAllByUserAndDateBetween(user, startDate, endDate)
 
-        // 2. Eventos donde el usuario es invitado (compatible con MongoDB)
-        def guestEvents = Event.findAllByGuestsIdAndDateBetween(user.id, startDate, endDate)
+        // 2. Eventos donde el usuario es invitado (filtrado en memoria)
+        def possibleGuestEvents = Event.findAllByDateBetween(startDate, endDate)
+        def guestEvents = possibleGuestEvents.findAll { it.guests*.id.contains(user.id) }
 
         // 3. Unir y eliminar duplicados
         def events = (ownerEvents + guestEvents).unique()
