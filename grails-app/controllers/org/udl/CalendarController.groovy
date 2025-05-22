@@ -24,6 +24,11 @@ class CalendarController {
         def currentWeek = []
 
         def user = springSecurityService.currentUser
+        if (!user) {
+            flash.message = "Debes iniciar sesión para ver el calendario."
+            redirect(controller: 'auth', action: 'auth')
+            return
+        }
         def startDate = LocalDate.of(year, month, 1)
         def endDate = LocalDate.of(year, month, daysInMonth)
 
