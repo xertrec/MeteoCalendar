@@ -37,7 +37,12 @@ class EventController {
             event.date = LocalDate.parse(params.date)
             if (params.guestEmail) {
                 def guest = User.findByUsername(params.guestEmail)
-                if (guest && !event.guests*.id.contains(guest.id)) {
+                if (!guest) {
+                    flash.message = "El usuario invitado no existe."
+                    redirect(controller: 'calendar', action: 'index')
+                    return
+                }
+                if (!event.guests*.id.contains(guest.id)) {
                     event.addToGuests(guest)
                 }
             }
@@ -50,6 +55,16 @@ class EventController {
         def event = Event.get(params.id)
         if (event && event.user == springSecurityService.currentUser) {
             event.delete(flush: true)
+        }
+        redirect(controller: 'calendar', action: 'index')
+    }
+
+    def leave() {
+        def event = Event.get(params.id)
+        def user = springSecurityService.currentUser
+        if (event && event.guests*.id.contains(user.id)) {
+            event.removeFromGuests(user)
+            event.save(flush: true)
         }
         redirect(controller: 'calendar', action: 'index')
     }

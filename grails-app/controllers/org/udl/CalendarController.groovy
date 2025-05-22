@@ -69,7 +69,8 @@ class CalendarController {
                 selectedYear: year,
                 selectedMonth: month,
                 selectedCountry: country,
-                events: events
+                events: events,
+                currentUser: user
         ])
     }
 }

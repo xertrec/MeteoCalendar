@@ -1,6 +1,5 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
 <title>CALENDAR - Month</title>
-
-
 
 <form method="get" action="${createLink(controller: 'calendar', action: 'index')}">
     <label for="year">Año:</label>
@@ -25,8 +24,9 @@
 
     <button type="submit">Consultar</button>
 </form>
-<a href="${createLink(controller:'event', action:'create')}" class="btn btn-primary" style="margin:10px;">Nuevo Evento</a>
-<h1>Calendario del Mes</h1>
+<g:link controller="event" action="create" class="btn btn-primary" style="margin:10px;">
+    <button type="button" style="width:100%;padding:10px;border:1px solid #ffb56b;border-radius:5px;font-size:14px;background-color:#ffb56b;color:#3d246c;cursor:pointer;transition:background-color 0.3s;">Nuevo Evento</button>
+</g:link><h1>Calendario del Mes</h1>
 <table border="1">
     <thead>
     <tr>
@@ -68,6 +68,7 @@
                                                   data-event-id="${event.id}"
                                                   data-event-title="${event.title}"
                                                   data-event-date="${event.date}"
+                                                  data-event-is-owner="${event.user.id == currentUser?.id ? 'true' : 'false'}"
                                                   style="cursor:pointer; user-select:text;">
                                                 📌 ${event.title}
                                             </span><br/>
@@ -79,6 +80,7 @@
                                                   data-event-id="${event.id}"
                                                   data-event-title="${event.title}"
                                                   data-event-date="${event.date}"
+                                                  data-event-is-owner="${event.user.id == currentUser?.id ? 'true' : 'false'}"
                                                   style="cursor:pointer; user-select:text;">
                                                 📌 ${event.title}
                                             </span><br/>
@@ -98,10 +100,11 @@
     <button type="submit" class="btn btn-danger">Log Out</button>
 </form>
 
-<!-- Modal para editar/eliminar evento -->
+<!-- Modal para editar/eliminar/abandonar evento -->
 <div id="eventModal" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-30%); background:#fff6e0; border:2px solid #a663cc; border-radius:10px; padding:20px; z-index:1000;">
     <form id="editEventForm" method="post">
         <input type="hidden" name="id" id="modalEventId"/>
+        <input type="hidden" id="modalEventIsOwner"/>
         <label for="modalEventTitle">Título:</label>
         <input type="text" name="title" id="modalEventTitle" required/><br>
         <label for="modalEventDate">Fecha:</label>
@@ -127,9 +130,37 @@
             const eventId = this.dataset.eventId;
             const eventTitle = this.dataset.eventTitle;
             const eventDate = this.dataset.eventDate;
+            const isOwner = this.dataset.eventIsOwner === "true";
             document.getElementById('modalEventId').value = eventId;
             document.getElementById('modalEventTitle').value = eventTitle;
             document.getElementById('modalEventDate').value = eventDate;
+            document.getElementById('modalEventIsOwner').value = isOwner;
+
+            const deleteBtn = document.getElementById('deleteEventBtn');
+            if (isOwner) {
+                deleteBtn.textContent = "Eliminar";
+                deleteBtn.onclick = function() {
+                    if (!confirm("¿Seguro que quieres eliminar este evento?")) return;
+                    const id = document.getElementById('modalEventId').value;
+                    fetch('${createLink(controller:"event", action:"delete")}', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                        body: 'id=' + encodeURIComponent(id)
+                    }).then(() => location.reload());
+                };
+            } else {
+                deleteBtn.textContent = "Abandonar";
+                deleteBtn.onclick = function() {
+                    if (!confirm("¿Seguro que quieres abandonar este evento?")) return;
+                    const id = document.getElementById('modalEventId').value;
+                    fetch('${createLink(controller:"event", action:"leave")}', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                        body: 'id=' + encodeURIComponent(id)
+                    }).then(() => location.reload());
+                };
+            }
+
             document.getElementById('eventModal').style.display = 'block';
             document.getElementById('modalOverlay').style.display = 'block';
         });
@@ -145,15 +176,18 @@
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: 'id=' + encodeURIComponent(id) +
-                  '&title=' + encodeURIComponent(title) +
-                  '&date=' + encodeURIComponent(date) +
-                  '&guestEmail=' + encodeURIComponent(guestEmail)
+                '&title=' + encodeURIComponent(title) +
+                '&date=' + encodeURIComponent(date) +
+                '&guestEmail=' + encodeURIComponent(guestEmail)
         }).then(() => location.reload());
     };
 
     document.getElementById('deleteEventBtn').onclick = function() {
+        const isOwner = document.getElementById('modalEventIsOwner').value === "true";
+        const confirmMsg = isOwner ? "¿Seguro que quieres eliminar este evento?" : "¿Seguro que quieres abandonar este evento?";
+        if (!confirm(confirmMsg)) return;
         const id = document.getElementById('modalEventId').value;
-        fetch('${createLink(controller:"event", action:"delete")}', {
+        fetch(isOwner ? '${createLink(controller:"event", action:"delete")}' : '${createLink(controller:"event", action:"leave")}', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
             body: 'id=' + encodeURIComponent(id)
@@ -286,7 +320,6 @@ td .holiday {
     font-size: 13px;
     color: #3d246c;
 }
-
 
 @media (max-width: 768px) {
     table {

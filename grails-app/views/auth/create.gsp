@@ -1,36 +1,113 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
+<!DOCTYPE html>
 <html>
 <head>
-    <meta name="layout" content="main"/>
-    <title>Register</title>
+    <title>Registro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f3e9ff;
+        margin: 0;
+        padding: 0;
+        color: #3d246c;
+    }
+
+    h1 {
+        text-align: center;
+        color: #a663cc;
+        margin-top: 20px;
+        font-size: 24px;
+    }
+
+    .register-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        margin: 20px auto;
+        width: 350px;
+        padding: 20px;
+        background-color: #fff6e0;
+        box-shadow: 0 4px 8px rgba(166, 99, 204, 0.08);
+        border-radius: 10px;
+    }
+
+    form label {
+        font-weight: bold;
+        color: #3d246c;
+        width: 100%;
+        text-align: left;
+    }
+
+    form input, form button {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ffb56b;
+        border-radius: 5px;
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    form button {
+        background-color: #ffb56b;
+        color: #3d246c;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    form button:hover {
+        background-color: #ff924c;
+    }
+
+    .btn-back {
+        background-color: #a663cc;
+        color: #fff;
+        margin-top: 10px;
+        border: none;
+        padding: 10px 0;
+        border-radius: 5px;
+        width: 100%;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        text-decoration: none;
+        display: block;
+        text-align: center;
+    }
+    .btn-back:hover {
+        background-color: #3d246c;
+    }
+
+    .alert {
+        background: #ffe0b2;
+        color: #a663cc;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    </style>
 </head>
 <body>
-
-<g:if test="${flash.message}">
-    <div class="text-center alert alert-warning" role="alert">${flash.message}</div>
-</g:if>
-
-<div class="container-fluid game-rules">
-    <h1>Register</h1>
+<h1>Registro</h1>
+<div class="register-container">
+    <g:if test="${flash.message}">
+        <div class="alert">${flash.message}</div>
+    </g:if>
     <g:form action="save" method="POST" useToken="true">
-        <div class="row">
-            <div class="form-group form-group-username col-12 mt-4">
-                <label for="username"><g:message code="user.username.label" /></label>
-                <input type="email" name="username" value="${user?.username}" class="form-control" id="username" placeholder="${message(code: 'user.username.label')}" />
-            </div>
-            <div class="form-group form-group-password col-12 mt-4">
-                <label for="password"><g:message code="user.password.label" /></label>
-                <input type="password" name="password" value="" class="form-control" id="password" placeholder="${message(code: 'user.password.label')}" />
-            </div>
-            <div class="form-group form-group-password col-12 mt-4">
-                <label for="password"><g:message code="user.password.label" /> (again)</label>
-                <input type="password" name="password2" value="" class="form-control" id="password2" placeholder="${message(code: 'user.password.label')}" />
-            </div>
-        </div>
-        <div class="row mt-4">
-            <input type="submit" value="REGISTER" class="btn btn-primary">
-        </div>
+        <label for="username"><g:message code="user.username.label" /></label>
+        <input type="email" name="username" value="${user?.username}" id="username" placeholder="${message(code: 'user.username.label')}" required />
+
+        <label for="password"><g:message code="user.password.label" /></label>
+        <input type="password" name="password" id="password" placeholder="${message(code: 'user.password.label')}" required />
+
+        <label for="password2"><g:message code="user.password.label" /> (de nuevo)</label>
+        <input type="password" name="password2" id="password2" placeholder="${message(code: 'user.password.label')}" required />
+
+        <button type="submit">Registrarse</button>
     </g:form>
+    <g:link controller="auth" action="auth" class="btn-back">Volver</g:link>
 </div>
 </body>
 </html>
