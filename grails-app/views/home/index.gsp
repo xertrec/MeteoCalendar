@@ -53,7 +53,7 @@
 <body>
 <h1>Bienvenido</h1>
 <div class="home-container">
-    <g:link controller="login" action="auth" class="btn btn-primary">
+    <g:link controller="auth" action="auth" class="btn btn-primary">
         <button>Log In</button>
     </g:link>
 </div>

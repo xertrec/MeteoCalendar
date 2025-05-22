@@ -77,7 +77,7 @@
 </head>
 <body>
 <h1>Iniciar Sesión</h1>
-<form action="${request.contextPath}/calendar/index" method="POST" id="loginForm" autocomplete="off">
+<form action="${request.contextPath}/login/authenticate" method="POST" id="loginForm" autocomplete="off">
     <label for="username">Correo Electrónico:</label>
     <input type="email" id="username" name="username" placeholder="Email" required autofocus />
 
@@ -88,6 +88,11 @@
 
     <p class="login__signup">
         <g:link controller="home" action="index">Cancelar</g:link>
+    </p>
+
+    <p class="login__signup">
+        ¿No tienes cuenta?
+        <g:link controller="auth" action="create">Regístrate aquí</g:link>
     </p>
 </form>
 

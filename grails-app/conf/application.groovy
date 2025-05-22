@@ -29,15 +29,6 @@ grails.plugin.springsecurity.filterChain.chainMap = [
 ]
 
 grails.plugin.springsecurity.useSecurityEventListener = true
-grails.plugin.springsecurity.onAuthenticationSuccessEvent = { e, appCtx ->
-    com.example.User.withTransaction {
-        def user = com.example.User.findByUsername(e.authentication.name)
-        user.lastLogin = new Date()
-        user.loginCount++
-        user.save(flush: true)
-    }
-}
-
 
 grails {
     mail {
@@ -56,4 +47,3 @@ grails.plugin.springsecurity.failureHandler.exceptionMappings = [
         [exception: org.springframework.security.authentication.DisabledException.name,           url: '/user/accountDisabled'],
         [exception: org.springframework.security.authentication.CredentialsExpiredException.name, url: '/user/passwordExpired']
 ]
-

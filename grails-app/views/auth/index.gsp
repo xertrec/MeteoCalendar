@@ -6,8 +6,8 @@
     </head>
     <body>
         <h1>Iniciar Sesión</h1>
-        <form action="/login" method="post">
-            <label for="username">Usuario:</label>
+    <form action="${request.contextPath}/login/authenticate" method="POST" id="loginForm" autocomplete="off">
+        <label for="username">Usuario:</label>
             <input type="text" id="username" name="username" required>
             <br>
             <label for="password">Contraseña:</label>

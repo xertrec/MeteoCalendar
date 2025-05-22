@@ -5,10 +5,8 @@ import org.apache.hc.client5.http.impl.classic.CloseableHttpClient
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.core5.http.io.entity.EntityUtils
-import grails.gorm.transactions.Transactional
 import groovy.json.JsonSlurper
 
-@Transactional
 class NagerDateService {
 
     List<Map> getHolidaysForCurrentMonth(String countryCode, int year, int month) {
