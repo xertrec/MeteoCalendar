@@ -1,22 +1,21 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<div id="chat-container" class="chat-container">
-    <div class="chat-header">
-        <h3>${contact.username}</h3>
-    </div>
-
-    <div id="messages-container" class="messages-container">
-        <g:each in="${messages}" var="message">
-            <g:render template="message" model="[message: message, currentUser: currentUser]"/>
-        </g:each>
-    </div>
-
-    <div class="chat-input">
-        <form id="message-form" onsubmit="sendMessage(event)">
-            <input type="hidden" id="receiverId" value="${contact.id}"/>
-            <input type="text" id="message-content" placeholder="Escribe un mensaje..." required/>
-            <button type="submit">Enviar</button>
-        </form>
-    </div>
+<%-- grails-app/views/contact/_chat.gsp --%>
+<div class="chat-contact-name">${contact.username}</div>
+<div class="chat-messages">
+    <g:each in="${messages}" var="msg">
+        <div style="margin: 5px 0; ${msg.sender.id == session.SPRING_SECURITY_CONTEXT?.authentication?.principal?.id ? 'text-align: right; color: #a663cc;' : 'text-align: left; color: #3d246c;'}">
+            <small style="font-size: 0.8em; opacity: 0.7;">
+                ${msg.formattedTime}
+            </small>
+            <div style="background: ${msg.sender.id == session.SPRING_SECURITY_CONTEXT?.authentication?.principal?.id ? '#f3e9ff' : '#ffe0b2'};
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 10px;
+            max-width: 80%;">
+                ${msg.content}
+            </div>
+        </div>
+    </g:each>
 </div>
 
 <style>

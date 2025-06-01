@@ -1,92 +1,142 @@
 package org.udl
 
+import grails.converters.JSON
+import grails.plugin.springsecurity.annotation.Secured
+
+@Secured(['ROLE_USER'])
 class ContactController {
+
     def springSecurityService
 
     def index() {
-        def currentUser = springSecurityService.currentUser
-        if (!currentUser) {
-            redirect(controller: 'auth', action: 'auth')
-            return
-        }
-
-        [
-                currentUser: currentUser,
-                contacts: currentUser.contacts,
-                messages: Message.findAllByReceiverOrSender(currentUser, currentUser,
-                        [sort: 'sentAt', order: 'desc', max: 100])
-        ]
+        def user = springSecurityService.currentUser
+        [contacts: user?.contacts ?: [], currentUser: user]
     }
 
-    def addContact() {
+    def search() {
+        def searchTerm = params.email
         def currentUser = springSecurityService.currentUser
-        def contactEmail = params.email
+        def results = []
 
-        def contact = User.findByUsername(contactEmail)
-        if (!contact) {
-            flash.message = "Usuario no encontrado"
-            redirect(action: 'index')
-            return
+        if (searchTerm && searchTerm != currentUser.username) {
+            results = User.findAllByUsernameIlike("%${searchTerm}%").findAll { it.id != currentUser.id }
         }
 
-        if (!currentUser.contacts.contains(contact)) {
-            currentUser.addToContacts(contact)
+        render(template: 'searchResults', model: [results: results])
+    }
+
+    def add() {
+        def currentUser = springSecurityService.currentUser
+        def contactToAdd = User.get(params.id)
+
+        if (contactToAdd && !currentUser.contacts.contains(contactToAdd)) {
+            currentUser.addToContacts(contactToAdd)
             currentUser.save(flush: true)
             flash.message = "Contacto añadido correctamente"
-        } else {
-            flash.message = "El usuario ya es un contacto"
         }
 
         redirect(action: 'index')
     }
 
-    def chat() {
+    def remove() {
         def currentUser = springSecurityService.currentUser
-        def contactId = params.id
-        def contact = User.get(contactId)
+        def contactToRemove = User.get(params.id)
 
-        if (!contact || !currentUser.contacts.contains(contact)) {
-            flash.message = "Contacto no encontrado"
-            redirect(action: 'index')
+        if (contactToRemove && currentUser.contacts.contains(contactToRemove)) {
+            currentUser.removeFromContacts(contactToRemove)
+            currentUser.save(flush: true)
+            flash.message = "Contacto eliminado correctamente"
+        }
+
+        redirect(action: 'index')
+    }
+
+    def getMessages() {
+        def currentUser = springSecurityService.currentUser
+        def contact = User.get(params.contactId)
+
+        if (!contact) {
+            render([error: "Contacto no encontrado"] as JSON)
             return
         }
 
-        // Obtener mensajes entre los usuarios ordenados por fecha
-        def messages = Message.findAll {
-            (sender == currentUser && receiver == contact) ||
-                    (sender == contact && receiver == currentUser)
-        }.sort { it.sentAt }
+        def messages = Message.createCriteria().list {
+            or {
+                and {
+                    eq('sender', currentUser)
+                    eq('receiver', contact)
+                }
+                and {
+                    eq('sender', contact)
+                    eq('receiver', currentUser)
+                }
+            }
+            order('sentAt', 'asc')
+        }
 
-        render(template: 'chat', model: [
-                contact: contact,
-                messages: messages,
-                currentUser: currentUser
-        ])
+        def formattedMessages = messages.collect { msg ->
+            [
+                    id: msg.id,
+                    content: msg.content,
+                    sentAt: msg.sentAt.format('HH:mm:ss'),
+                    isFromCurrentUser: msg.sender.id == currentUser.id
+            ]
+        }
+
+        render formattedMessages as JSON
     }
 
     def sendMessage() {
         def currentUser = springSecurityService.currentUser
-        def contact = User.get(params.receiverId)
+        def receiver = User.get(params.receiverId)
 
-        if (!contact || !currentUser.contacts.contains(contact)) {
-            render status: 404
+        if (!receiver) {
+            render(status: 400, text: 'Receptor no válido')
             return
         }
 
         def message = new Message(
                 sender: currentUser,
-                receiver: contact,
-                content: params.content,
-                sentAt: LocalDateTime.now()
+                receiver: receiver,
+                content: params.content?.trim()
         )
 
-        if (message.save()) {
-            render template: 'message', model: [
-                    message: message,
+        if (message.save(flush: true)) {
+            def messages = Message.findAll {
+                (sender == currentUser && receiver == receiver) ||
+                        (sender == receiver && receiver == currentUser)
+            }.sort { it.sentAt }
+
+            render(template: 'chat', model: [
+                    messages: messages,
+                    contact: receiver,
                     currentUser: currentUser
+            ])
+        } else {
+            render(status: 500, text: 'Error al enviar mensaje')
+        }
+    }
+
+    def chat(String id) {
+        def contact = User.get(id)
+        if (!contact) {
+            render status: 404
+            return
+        }
+
+        def currentUser = springSecurityService.currentUser
+        def messages = Message.findAll {
+            (sender == currentUser && receiver == contact) ||
+                    (sender == contact && receiver == currentUser)
+        }
+
+        if (params.ajax) {
+            render template: "chat", model: [
+                    contact: contact,
+                    messages: messages
             ]
         } else {
-            render status: 400
+            [contact: contact, messages: messages]
         }
     }
 }

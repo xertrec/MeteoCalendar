@@ -6,17 +6,21 @@ grails.plugin.springsecurity.fii.rejectPublicInvocations = false
 grails.plugin.springsecurity.userLookup.userDomainClassName = 'org.udl.User'
 grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'org.udl.UserRole'
 grails.plugin.springsecurity.authority.className = 'org.udl.Role'
+grails.plugin.springsecurity.securityConfigType = "Annotation"
+
 grails.plugin.springsecurity.controllerAnnotations.staticRules = [
-        [pattern: '/',               access: ['permitAll']],
-        [pattern: '/error',          access: ['permitAll']],
-        [pattern: '/index',          access: ['permitAll']],
-        [pattern: '/index.gsp',      access: ['permitAll']],
-        [pattern: '/shutdown',       access: ['permitAll']],
-        [pattern: '/assets/**',      access: ['permitAll']],
-        [pattern: '/**/js/**',       access: ['permitAll']],
-        [pattern: '/**/css/**',      access: ['permitAll']],
-        [pattern: '/**/images/**',   access: ['permitAll']],
-        [pattern: '/**/favicon.ico', access: ['permitAll']]
+        [pattern: '/',                      access: ['permitAll']],
+        [pattern: '/error',                 access: ['permitAll']],
+        [pattern: '/index',                 access: ['permitAll']],
+        [pattern: '/index.gsp',             access: ['permitAll']],
+        [pattern: '/shutdown',              access: ['permitAll']],
+        [pattern: '/assets/**',             access: ['permitAll']],
+        [pattern: '/**/js/**',             access: ['permitAll']],
+        [pattern: '/**/css/**',            access: ['permitAll']],
+        [pattern: '/**/images/**',         access: ['permitAll']],
+        [pattern: '/**/favicon.ico',        access: ['permitAll']],
+        [pattern: '/contact/sendMessage',   access: ['ROLE_USER']],
+        [pattern: '/contact/**',            access: ['ROLE_USER']]
 ]
 
 grails.plugin.springsecurity.filterChain.chainMap = [

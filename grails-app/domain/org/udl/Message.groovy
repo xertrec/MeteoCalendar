@@ -14,4 +14,7 @@ class Message {
         receiver nullable: false
         sentAt nullable: false
     }
+    String getFormattedTime() {
+        return sentAt.format(java.time.format.DateTimeFormatter.ofPattern('HH:mm'))
+    }
 }

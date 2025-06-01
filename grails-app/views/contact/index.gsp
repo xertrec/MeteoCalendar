@@ -170,50 +170,58 @@
         const chatDiv = document.getElementById('floating-chat');
         chatDiv.innerHTML = '<div class="chat-header">Cargando chat...<button class="close-btn" onclick="closeFloatingChat()">×</button></div>';
         chatDiv.style.display = 'block';
+
         fetch('${createLink(controller:"contact", action:"chat")}/' + contactId + '?ajax=true')
             .then(resp => resp.text())
             .then(html => {
                 chatDiv.innerHTML = `
-                    <div class="chat-header">
-                        Chat con <span id="chat-contact-name"></span>
-                        <button class="close-btn" onclick="closeFloatingChat()">×</button>
-                    </div>
-                    <div class="chat-messages" id="chat-messages"></div>
-                    <form class="chat-form" id="chatForm" autocomplete="off">
-                        <input type="hidden" name="receiverId" value="${contactId}" />
-                        <input type="text" name="content" id="chatInput" placeholder="Escribe un mensaje..." required autocomplete="off"/>
-                        <button type="submit">Enviar</button>
-                    </form>
-                `;
+                <div class="chat-header">
+                    Chat con <span id="chat-contact-name"></span>
+                    <button class="close-btn" onclick="closeFloatingChat()">×</button>
+                </div>
+                <div class="chat-messages" id="chat-messages"></div>
+                <form class="chat-form" id="chatForm" autocomplete="off">
+                    <input type="hidden" name="receiverId" value="${contactId}" />
+                    <input type="text" name="content" id="chatInput" placeholder="Escribe un mensaje..." required />
+                    <button type="submit">Enviar</button>
+                </form>
+            `;
+
                 // Insertar mensajes y nombre
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = html;
                 const messages = tempDiv.querySelector('.chat-messages') || tempDiv;
                 document.getElementById('chat-messages').innerHTML = messages.innerHTML;
-                const contactName = tempDiv.querySelector('.chat-contact-name') ? tempDiv.querySelector('.chat-contact-name').textContent : '';
+                const contactName = tempDiv.querySelector('.chat-contact-name') ?
+                    tempDiv.querySelector('.chat-contact-name').textContent : '';
                 document.getElementById('chat-contact-name').textContent = contactName;
 
                 // Scroll al final
                 const msgDiv = document.getElementById('chat-messages');
                 msgDiv.scrollTop = msgDiv.scrollHeight;
 
-                // Enviar mensaje por AJAX
+                // Configurar el manejador del formulario de chat
                 document.getElementById('chatForm').onsubmit = function(ev) {
                     ev.preventDefault();
                     const formData = new FormData(this);
+                    formData.append('ajax', 'true');
+
                     fetch('${createLink(controller:"contact", action:"sendMessage")}', {
                         method: 'POST',
-                        body: new URLSearchParams([...formData, ['ajax', 'true']])
+                        body: new URLSearchParams(formData)
                     })
                         .then(resp => resp.text())
                         .then(html => {
-                            // Recargar solo los mensajes
-                            const tempDiv2 = document.createElement('div');
-                            tempDiv2.innerHTML = html;
-                            const newMessages = tempDiv2.querySelector('.chat-messages') || tempDiv2;
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = html;
+                            const newMessages = tempDiv.querySelector('.chat-messages') || tempDiv;
                             document.getElementById('chat-messages').innerHTML = newMessages.innerHTML;
                             document.getElementById('chatInput').value = '';
                             msgDiv.scrollTop = msgDiv.scrollHeight;
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Error al enviar el mensaje');
                         });
                 };
             });
@@ -223,6 +231,33 @@
         document.getElementById('floating-chat').style.display = 'none';
         document.getElementById('floating-chat').innerHTML = '';
     }
+
+    document.getElementById('chatForm').onsubmit = function(ev) {
+        ev.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('${createLink(controller:"contact", action:"sendMessage")}', {
+            method: 'POST',
+            body: new URLSearchParams(formData)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.text();
+            })
+            .then(html => {
+                const chatMessages = document.getElementById('chat-messages');
+                chatMessages.innerHTML = html;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                document.getElementById('chatInput').value = '';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al enviar el mensaje');
+            });
+    };
+
 </script>
 </body>
 </html>
