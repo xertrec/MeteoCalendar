@@ -135,8 +135,23 @@
                                                           data-event-title="${event.title}"
                                                           data-event-date="${event.date}"
                                                           data-event-is-owner="${event.user.id == currentUser?.id ? 'true' : 'false'}"
-                                                          style="cursor:pointer; user-select:text;">
-                                                        📌 ${event.title}
+                                                          style="cursor:pointer; user-select:text; background-color: ${event.user.id == currentUser?.id ? '#a663cc' : '#ff924c'}; color: white; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 2px;">
+                                                        ${event.title}
+                                                        <g:if test="${event.user.id == currentUser?.id}">
+                                                            <g:if test="${event.guests}">
+                                                                <span style="font-size: 10px; display: block; opacity: 0.8;">
+                                                                    Invitados: ${event.guests.collect { it.username }.join(', ')}
+                                                                </span>
+                                                            </g:if>
+                                                        </g:if>
+                                                        <g:else>
+                                                            <span style="font-size: 10px; display: block; opacity: 0.8;">
+                                                                ${event?.user?.username ?: 'Desconocido'}
+                                                                <g:if test="${event?.guests}">
+                                                                    <br/>${event.guests*.username.findAll().join(', ')}
+                                                                </g:if>
+                                                            </span>
+                                                        </g:else>
                                                     </span><br/>
                                                 </g:each>
                                             </div>
@@ -232,7 +247,8 @@
             </select><br>
         </div>
     </form>
-</div><!-- Modal para editar/eliminar/abandonar evento -->
+</div>
+<!-- Modal para editar/eliminar/abandonar evento -->
 <div id="eventModal" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-30%); background:#fff6e0; border:2px solid #a663cc; border-radius:10px; padding:20px; z-index:1000;">
     <form id="editEventForm" method="post">
         <input type="hidden" name="id" id="modalEventId"/>
@@ -441,6 +457,28 @@ form button:hover {
     height: 100%;
     border-collapse: collapse;
 }
+.event-title {
+    font-size: 11px !important;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: inline-block;
+    line-height: 1.2;
+    margin-bottom: 2px;
+}
+
+.event-list {
+    position: absolute;
+    bottom: 30px;
+    left: 5px;
+    max-height: 45%;
+    width: calc(100% - 10px);
+    overflow-y: auto;
+    color: #4a148c;
+    font-size: 13px;
+    padding: 2px;
+}
 
 /* Tabla del calendario */
 table {
@@ -475,6 +513,23 @@ th {
 td {
     background-color: #f3e9ff;
     transition: background-color 0.3s;
+    position: relative;
+    padding: 10px;
+    height: 120px;
+    overflow: hidden;
+}
+
+.holiday {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
+    font-size: 12px;
+    color: #ff924c;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 td:hover {
@@ -488,15 +543,6 @@ td .day-number {
     font-size: 14px;
     font-weight: bold;
     color: #3d246c;
-}
-
-td .holiday {
-    position: absolute;
-    bottom: 5px;
-    left: 5px;
-    font-size: 16px;
-    color: #ff924c;
-    font-weight: bold;
 }
 
 .holiday-cell {

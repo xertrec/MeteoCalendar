@@ -1,6 +1,7 @@
 package org.udl
 
 import groovy.json.JsonSlurper
+import java.time.LocalDate
 
 class OpenMeteoService {
 
@@ -10,14 +11,20 @@ class OpenMeteoService {
         def latitude = getCityCoordinates()[city]?.lat
         def longitude = getCityCoordinates()[city]?.lon
 
-        def startDate = String.format('%04d-%02d-01', year, month)
-        def endDate = String.format('%04d-%02d-%02d', year, month,
-                Calendar.getInstance().with { set(year, month-1, 1); getActualMaximum(DAY_OF_MONTH) })
+        // Fecha de inicio: primer día del mes
+        LocalDate startDate = LocalDate.of(year, month, 1)
+        // Último día del mes
+        int daysInMonth = java.time.YearMonth.of(year, month).lengthOfMonth()
+        LocalDate lastDayOfMonth = LocalDate.of(year, month, daysInMonth)
+        // Hoy + 14
+        // días
+        LocalDate maxEndDate = LocalDate.now().plusDays(14)
+        // La fecha de fin es el menor entre el último día del mes y hoy+14
+        LocalDate requestedEndDate = lastDayOfMonth.isBefore(maxEndDate) ? lastDayOfMonth : maxEndDate
 
-        def apiUrl = "${API_BASE_URL}?latitude=${latitude}&longitude=${longitude}&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_max,weathercode&timezone=Europe/Madrid"
+        def apiUrl = "${API_BASE_URL}?latitude=${latitude}&longitude=${longitude}&start_date=${startDate}&end_date=${requestedEndDate}&daily=temperature_2m_max,weathercode&timezone=Europe/Madrid"
 
         try {
-            def url = new URL(apiUrl)
             def jsonResponse = new URL(apiUrl).getText('UTF-8')
             def slurper = new JsonSlurper()
             def result = slurper.parseText(jsonResponse)

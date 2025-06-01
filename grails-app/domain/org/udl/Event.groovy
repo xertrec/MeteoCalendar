@@ -13,7 +13,13 @@ class Event {
     LocalDate date
     User user
     List<User> guests = []
+
     static hasMany = [guests: User]
+
+    static mapping = {
+        user fetch: 'join'  // Carga eager del usuario
+        guests fetch: 'join' // Carga eager de los invitados
+    }
 
     static constraints = {
         title blank: false
