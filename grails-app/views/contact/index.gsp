@@ -72,63 +72,82 @@
         margin-bottom: 10px;
         text-align: center;
     }
-    #floating-chat {
+    .chat-modal {
         display: none;
         position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 350px;
-        z-index: 2000;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         background: #fff6e0;
-        border: 2px solid #a663cc;
+        padding: 20px;
         border-radius: 10px;
-        box-shadow: 0 4px 16px rgba(166, 99, 204, 0.18);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        width: 80%;
+        max-width: 500px;
+        z-index: 1000;
     }
-    #floating-chat .chat-header {
-        background: #a663cc;
-        color: #fff;
-        padding: 10px;
-        border-radius: 10px 10px 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
     }
-    #floating-chat .chat-messages {
-        max-height: 300px;
+    .chat-messages {
+        height: 300px;
         overflow-y: auto;
+        border: 1px solid #e0c3fc;
         padding: 10px;
-        background: #fff;
+        margin-bottom: 10px;
+        background: white;
     }
-    #floating-chat .chat-form {
+    .message {
+        margin: 5px 0;
+        padding: 5px 10px;
+        border-radius: 10px;
+    }
+    .message.sent {
+        background: #a663cc;
+        color: white;
+        margin-left: 20%;
+    }
+    .message.received {
+        background: #e0c3fc;
+        margin-right: 20%;
+    }
+    .message-form {
         display: flex;
-        border-top: 1px solid #e0c3fc;
-        padding: 10px;
-        background: #fff6e0;
+        gap: 10px;
     }
-    #floating-chat .chat-form input {
-        flex: 1;
+    .message-input {
+        flex-grow: 1;
+        padding: 8px;
         border: 1px solid #ffb56b;
         border-radius: 5px;
-        padding: 8px;
     }
-    #floating-chat .chat-form button {
+    .send-button {
+        padding: 8px 16px;
         background: #ffb56b;
-        color: #3d246c;
         border: none;
         border-radius: 5px;
-        padding: 8px 12px;
-        margin-left: 5px;
+        color: #3d246c;
         cursor: pointer;
     }
-    #floating-chat .chat-form button:hover {
+    .send-button:hover {
         background: #ff924c;
     }
-    #floating-chat .close-btn {
+    .close-button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
         background: none;
         border: none;
-        color: #fff;
-        font-size: 18px;
+        font-size: 20px;
         cursor: pointer;
+        color: #3d246c;
     }
     </style>
 </head>
@@ -143,7 +162,7 @@
             <li class="contact-item" data-contact-id="${contact.id}">
                 ${contact.username}
                 <g:link action="remove" params="[id: contact.id]" style="float:right; color:#e53935; margin-left:10px;">Eliminar</g:link>
-                <button type="button" class="open-chat-btn" data-contact-id="${contact.id}" style="float:right; background:none; border:none; color:#a663cc; cursor:pointer;">💬</button>
+                <button type="button" onclick="openChat('${contact.id}', '${contact.username}')" style="float:right; background:none; border:none; color:#a663cc; cursor:pointer;">💬</button>
             </li>
         </g:each>
     </ul>
@@ -154,110 +173,64 @@
     <g:link controller="calendar" action="index" class="btn-back" style="display:block; margin-top:20px; text-align:center;">Volver al calendario</g:link>
 </div>
 
-<div id="floating-chat"></div>
+<div id="chatModal" class="chat-modal">
+    <button class="close-button" onclick="closeChat()">×</button>
+    <h3 id="chatTitle"></h3>
+    <div id="chatMessages" class="chat-messages"></div>
+    <form id="messageForm" class="message-form" onsubmit="sendMessage(event)">
+        <input type="hidden" id="receiverId" name="receiverId" />
+        <input type="text" id="messageContent" name="content" class="message-input" placeholder="Escribe un mensaje..." required />
+        <button type="submit" class="send-button">Enviar</button>
+    </form>
+</div>
+
+<div id="modalOverlay" class="modal-overlay" onclick="closeChat()"></div>
 
 <script>
-    // Abrir chat flotante al hacer clic en el botón 💬
-    document.querySelectorAll('.open-chat-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const contactId = this.dataset.contactId;
-            openFloatingChat(contactId);
-        });
-    });
+    function openChat(contactId, contactName) {
+        document.getElementById('receiverId').value = contactId;
+        document.getElementById('chatTitle').textContent = 'Chat con ' + contactName;
+        document.getElementById('chatModal').style.display = 'block';
+        document.getElementById('modalOverlay').style.display = 'block';
+        loadMessages(contactId);
+    }
 
-    function openFloatingChat(contactId) {
-        const chatDiv = document.getElementById('floating-chat');
-        chatDiv.innerHTML = '<div class="chat-header">Cargando chat...<button class="close-btn" onclick="closeFloatingChat()">×</button></div>';
-        chatDiv.style.display = 'block';
+    function closeChat() {
+        document.getElementById('chatModal').style.display = 'none';
+        document.getElementById('modalOverlay').style.display = 'none';
+    }
 
-        fetch('${createLink(controller:"contact", action:"chat")}/' + contactId + '?ajax=true')
-            .then(resp => resp.text())
-            .then(html => {
-                chatDiv.innerHTML = `
-                <div class="chat-header">
-                    Chat con <span id="chat-contact-name"></span>
-                    <button class="close-btn" onclick="closeFloatingChat()">×</button>
-                </div>
-                <div class="chat-messages" id="chat-messages"></div>
-                <form class="chat-form" id="chatForm" autocomplete="off">
-                    <input type="hidden" name="receiverId" value="${contactId}" />
-                    <input type="text" name="content" id="chatInput" placeholder="Escribe un mensaje..." required />
-                    <button type="submit">Enviar</button>
-                </form>
-            `;
-
-                // Insertar mensajes y nombre
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = html;
-                const messages = tempDiv.querySelector('.chat-messages') || tempDiv;
-                document.getElementById('chat-messages').innerHTML = messages.innerHTML;
-                const contactName = tempDiv.querySelector('.chat-contact-name') ?
-                    tempDiv.querySelector('.chat-contact-name').textContent : '';
-                document.getElementById('chat-contact-name').textContent = contactName;
-
-                // Scroll al final
-                const msgDiv = document.getElementById('chat-messages');
-                msgDiv.scrollTop = msgDiv.scrollHeight;
-
-                // Configurar el manejador del formulario de chat
-                document.getElementById('chatForm').onsubmit = function(ev) {
-                    ev.preventDefault();
-                    const formData = new FormData(this);
-                    formData.append('ajax', 'true');
-
-                    fetch('${createLink(controller:"contact", action:"sendMessage")}', {
-                        method: 'POST',
-                        body: new URLSearchParams(formData)
-                    })
-                        .then(resp => resp.text())
-                        .then(html => {
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = html;
-                            const newMessages = tempDiv.querySelector('.chat-messages') || tempDiv;
-                            document.getElementById('chat-messages').innerHTML = newMessages.innerHTML;
-                            document.getElementById('chatInput').value = '';
-                            msgDiv.scrollTop = msgDiv.scrollHeight;
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('Error al enviar el mensaje');
-                        });
-                };
+    function loadMessages(contactId) {
+        fetch('${createLink(controller:"contact", action:"getMessages")}?contactId=' + contactId)
+            .then(response => response.json())
+            .then(messages => {
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = '';
+                messages.forEach(message => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message ' + (message.isSent ? 'sent' : 'received');
+                    messageDiv.textContent = message.content;
+                    chatMessages.appendChild(messageDiv);
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
             });
     }
 
-    function closeFloatingChat() {
-        document.getElementById('floating-chat').style.display = 'none';
-        document.getElementById('floating-chat').innerHTML = '';
-    }
-
-    document.getElementById('chatForm').onsubmit = function(ev) {
-        ev.preventDefault();
-        const formData = new FormData(this);
+    function sendMessage(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
 
         fetch('${createLink(controller:"contact", action:"sendMessage")}', {
             method: 'POST',
-            body: new URLSearchParams(formData)
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Error en la respuesta del servidor');
-                }
-                return response.text();
-            })
-            .then(html => {
-                const chatMessages = document.getElementById('chat-messages');
-                chatMessages.innerHTML = html;
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-                document.getElementById('chatInput').value = '';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al enviar el mensaje');
-            });
-    };
-
+            body: formData
+        }).then(response => {
+            if (response.ok) {
+                form.reset();
+                loadMessages(document.getElementById('receiverId').value);
+            }
+        });
+    }
 </script>
 </body>
 </html>

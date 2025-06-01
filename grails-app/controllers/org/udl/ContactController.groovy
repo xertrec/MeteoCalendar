@@ -27,12 +27,39 @@ class ContactController {
 
     def add() {
         def currentUser = springSecurityService.currentUser
-        def contactToAdd = User.get(params.id)
+        def email = params.email?.trim()
 
-        if (contactToAdd && !currentUser.contacts.contains(contactToAdd)) {
-            currentUser.addToContacts(contactToAdd)
-            currentUser.save(flush: true)
+        if (!email) {
+            flash.message = "Por favor, ingresa un correo electrónico"
+            redirect(action: 'index')
+            return
+        }
+
+        def contactToAdd = User.findByUsername(email)
+
+        if (!contactToAdd) {
+            flash.message = "No se encontró ningún usuario con ese correo"
+            redirect(action: 'index')
+            return
+        }
+
+        if (contactToAdd.id == currentUser.id) {
+            flash.message = "No puedes agregarte a ti mismo como contacto"
+            redirect(action: 'index')
+            return
+        }
+
+        if (currentUser.contacts?.contains(contactToAdd)) {
+            flash.message = "Este usuario ya está en tu lista de contactos"
+            redirect(action: 'index')
+            return
+        }
+
+        currentUser.addToContacts(contactToAdd)
+        if (currentUser.save(flush: true)) {
             flash.message = "Contacto añadido correctamente"
+        } else {
+            flash.message = "Error al agregar el contacto"
         }
 
         redirect(action: 'index')
@@ -51,70 +78,52 @@ class ContactController {
         redirect(action: 'index')
     }
 
-    def getMessages() {
-        def currentUser = springSecurityService.currentUser
-        def contact = User.get(params.contactId)
-
-        if (!contact) {
-            render([error: "Contacto no encontrado"] as JSON)
-            return
-        }
-
-        def messages = Message.createCriteria().list {
-            or {
-                and {
-                    eq('sender', currentUser)
-                    eq('receiver', contact)
-                }
-                and {
-                    eq('sender', contact)
-                    eq('receiver', currentUser)
-                }
-            }
-            order('sentAt', 'asc')
-        }
-
-        def formattedMessages = messages.collect { msg ->
-            [
-                    id: msg.id,
-                    content: msg.content,
-                    sentAt: msg.sentAt.format('HH:mm:ss'),
-                    isFromCurrentUser: msg.sender.id == currentUser.id
-            ]
-        }
-
-        render formattedMessages as JSON
-    }
-
+    @Secured(['ROLE_USER'])
     def sendMessage() {
         def currentUser = springSecurityService.currentUser
         def receiver = User.get(params.receiverId)
 
         if (!receiver) {
-            render(status: 400, text: 'Receptor no válido')
+            render status: 404
             return
         }
 
         def message = new Message(
                 sender: currentUser,
                 receiver: receiver,
-                content: params.content?.trim()
+                content: params.content
         )
 
         if (message.save(flush: true)) {
-            def messages = Message.findAll {
-                (sender == currentUser && receiver == receiver) ||
-                        (sender == receiver && receiver == currentUser)
-            }.sort { it.sentAt }
-
-            render(template: 'chat', model: [
-                    messages: messages,
-                    contact: receiver,
-                    currentUser: currentUser
-            ])
+            render status: 200
         } else {
-            render(status: 500, text: 'Error al enviar mensaje')
+            render status: 400
         }
+    }
+
+    def getMessages() {
+        def currentUser = springSecurityService.currentUser
+        def contact = User.get(params.contactId)
+
+        if (!contact) {
+            render status: 404
+            return
+        }
+
+        def messages = Message.findAll {
+            (sender == currentUser && receiver == contact) ||
+                    (sender == contact && receiver == currentUser)
+        }
+
+        def messageList = messages.collect { msg ->
+            [
+                    content: msg.content,
+                    isSent: msg.sender.id == currentUser.id,
+                    time: msg.formattedTime
+            ]
+        }
+
+        render messageList as JSON
     }
 
     def chat(String id) {
