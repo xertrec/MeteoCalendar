@@ -1,54 +1,99 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-<div class="chat-messages">
-    <g:if test="${error}">
-        <div class="alert">${error}</div>
-    </g:if>
-    <g:each in="${messages}" var="msg">
-        <div style="margin-bottom:8px;${msg.sender?.id == currentUser?.id ? 'text-align:right;' : 'text-align:left;'}">
-            <span style="background:${msg.sender?.id == currentUser?.id ? '#a663cc' : '#ffb56b'};color:#fff;padding:6px 12px;border-radius:8px;display:inline-block;">
-                ${msg.content}
-            </span>
-            <span style="font-size:10px;color:#888;margin-left:5px;">
-                ${msg.sentAt?.format('HH:mm')}
-            </span>
-        </div>
-    </g:each>
+<div id="chat-container" class="chat-container">
+    <div class="chat-header">
+        <h3>${contact.username}</h3>
+    </div>
+
+    <div id="messages-container" class="messages-container">
+        <g:each in="${messages}" var="message">
+            <g:render template="message" model="[message: message, currentUser: currentUser]"/>
+        </g:each>
+    </div>
+
+    <div class="chat-input">
+        <form id="message-form" onsubmit="sendMessage(event)">
+            <input type="hidden" id="receiverId" value="${contact.id}"/>
+            <input type="text" id="message-content" placeholder="Escribe un mensaje..." required/>
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
 </div>
-<form class="chat-form" id="chatForm" autocomplete="off" style="display:flex; border-top:1px solid #e0c3fc; padding:10px; background:#fff6e0;">
-    <input type="hidden" name="receiverId" value="${contact?.id}" />
-    <input type="text" name="content" id="chatInput" placeholder="Escribe un mensaje..." required autocomplete="off" style="flex:1; border:1px solid #ffb56b; border-radius:5px; padding:8px;" />
-    <button type="submit" style="background-color:#ffb56b; color:#3d246c; border:none; border-radius:5px; padding:8px 12px; margin-left:5px; cursor:pointer;">Enviar</button>
-</form>
+
+<style>
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chat-header {
+    padding: 15px;
+    background: #a663cc;
+    color: white;
+    border-radius: 8px 8px 0 0;
+}
+
+.messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chat-input {
+    padding: 15px;
+    border-top: 1px solid #eee;
+}
+
+.chat-input form {
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.chat-input button {
+    padding: 8px 16px;
+    background: #ffb56b;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.chat-input button:hover {
+    background: #ff924c;
+}
+</style>
+
 <script>
-    // Intercepta el envío del formulario para usar AJAX
-    document.getElementById('chatForm').onsubmit = function(e) {
-        e.preventDefault();
-        const form = this;
-        const contactId = form.receiverId.value;
-        const formData = new FormData(form);
-        fetch('/contact/sendMessage', {
+    function sendMessage(event) {
+        event.preventDefault();
+        const form = event.target;
+        const content = document.getElementById('message-content').value;
+        const receiverId = document.getElementById('receiverId').value;
+
+        fetch('${createLink(controller: "contact", action: "sendMessage")}', {
             method: 'POST',
-            body: formData
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `receiverId=${receiverId}&content=${encodeURIComponent(content)}`
         })
-            .then(() => {
-                // Recarga solo el chat después de enviar
-                fetch('/contact/chat/' + contactId + '?ajax=1')
-                    .then(response => response.text())
-                    .then(html => {
-                        document.getElementById('floating-chat').innerHTML = html;
-                        document.getElementById('floating-chat').style.display = 'block';
-                    });
+            .then(response => response.text())
+            .then(html => {
+                const messagesContainer = document.getElementById('messages-container');
+                messagesContainer.insertAdjacentHTML('beforeend', html);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 form.reset();
             });
-    };
+    }
 </script>
-<style>
-.floating-chat-container { width: 350px; }
-.chat-history { max-height: 300px; overflow-y: auto; margin-bottom: 10px; }
-.message { margin-bottom: 10px; padding: 6px 10px; border-radius: 8px; max-width: 80%; }
-.from-me { background: #e1d5fa; color: #a663cc; text-align: right; margin-left: auto; }
-.from-them { background: #ffe0b2; color: #3d246c; text-align: left; margin-right: auto; }
-.chat-form { display: flex; gap: 10px; margin-top: 15px; }
-input, button { padding: 8px; border-radius: 5px; border: 1px solid #ffb56b; }
-button { background: #ffb56b; color: #3d246c; cursor: pointer; }
-</style>

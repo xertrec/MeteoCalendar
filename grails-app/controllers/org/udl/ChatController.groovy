@@ -3,34 +3,49 @@ package org.udl
 class ChatController {
     def springSecurityService
 
-    def chat(Long id) {
-        def contact = User.get(id)
+    def show(Long id) {
         def currentUser = springSecurityService.currentUser
-        if (!contact || !currentUser.contacts.contains(contact)) {
-            render(template: '/contact/chat', model: [messages: [], contact: contact, error: "No puedes chatear con este usuario.", currentUser: currentUser])
-            return
-        }
-        def messages = Message.where {
-            (sender == currentUser && receiver == contact) || (sender == contact && receiver == currentUser)
-        }.list(sort: 'sentAt', order: 'asc')
-        render(template: '/contact/chat', model: [messages: messages, contact: contact, currentUser: currentUser])
-    }
+        def contact = User.get(id)
 
-    def sendMessage() {
-        def user = springSecurityService.currentUser
-        def contact = User.get(params.receiverId)
-        if (!contact || !user.contacts.contains(contact)) {
-            flash.message = "No puedes enviar mensajes a este usuario."
+        if (!contact || !currentUser.contacts.contains(contact)) {
+            flash.message = "Contacto no encontrado o no autorizado"
             redirect(controller: 'contact', action: 'index')
             return
         }
-        def message = new Message(sender: user, receiver: contact, content: params.content)
-        if (!message.save(flush: true)) {
-            flash.message = "Error al enviar el mensaje."
+
+        // Obtener mensajes entre los dos usuarios ordenados por fecha
+        def messages = Message.findAll {
+            (sender == currentUser && receiver == contact) ||
+                    (sender == contact && receiver == currentUser)
         }
-        def messages = Message.where {
-            (sender == user && receiver == contact) || (sender == contact && receiver == user)
-        }.list(sort: 'sentAt', order: 'asc')
-        render(template: '/contact/chat', model: [contact: contact, messages: messages, currentUser: user])
+        messages.sort { it.sentAt }
+
+        render(view: 'show', model: [
+                contact: contact,
+                currentUser: currentUser,
+                messages: messages
+        ])
+    }
+
+    def send() {
+        def currentUser = springSecurityService.currentUser
+        def receiver = User.get(params.receiverId)
+
+        if (!receiver || !currentUser.contacts.contains(receiver)) {
+            render(status: 400, text: 'Receptor no válido')
+            return
+        }
+
+        def message = new Message(
+                sender: currentUser,
+                receiver: receiver,
+                content: params.content
+        )
+
+        if (message.save(flush: true)) {
+            render(status: 200, text: 'Mensaje enviado')
+        } else {
+            render(status: 500, text: 'Error al enviar mensaje')
+        }
     }
 }
