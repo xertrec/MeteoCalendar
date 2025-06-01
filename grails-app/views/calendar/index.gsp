@@ -1,21 +1,32 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <title>CALENDAR - Month</title>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 5% 0 5%;">
-    <div>
-        <g:link controller="event" action="create" class="btn btn-primary" style="margin-right: 10px;">
-            <button type="button" style="padding:8px 16px;border:1px solid #ffb56b;border-radius:5px;font-size:14px;background-color:#ffb56b;color:#3d246c;cursor:pointer;transition:background-color 0.3s;">Nuevo Evento</button>
+<!-- Topbar con botones y usuario -->
+<div style="display: flex; justify-content: space-between; align-items: center; width: 80%; margin: 30px auto 0 auto; padding: 10px 0;">
+    <div style="display: flex; gap: 10px;">
+        <g:link controller="event" action="create" class="btn btn-primary">
+            <button type="button" style="padding:8px 16px; border:1px solid #ffb56b; border-radius:5px; font-size:14px; background-color:#ffb56b; color:#3d246c; cursor:pointer;">Nuevo Evento</button>
+        </g:link>
+        <g:link controller="calendar" action="index" params="[view: 'month']" class="btn btn-secondary">
+            <button type="button" style="padding:8px 16px; border:1px solid #a663cc; border-radius:5px; font-size:14px; background-color:#a663cc; color:#fff; cursor:pointer;">Ver mes</button>
+        </g:link>
+        <g:link controller="calendar" action="index" params="[view: 'week']" class="btn btn-secondary">
+            <button type="button" style="padding:8px 16px; border:1px solid #a663cc; border-radius:5px; font-size:14px; background-color:#a663cc; color:#fff; cursor:pointer;">Ver semana</button>
+        </g:link>
+        <g:link controller="contact" action="index" class="btn btn-secondary">
+            <button type="button" style="padding:8px 16px; border:1px solid #a663cc; border-radius:5px; font-size:14px; background-color:#a663cc; color:#fff; cursor:pointer;">Contactos</button>
         </g:link>
     </div>
-    <div style="display: flex; align-items: center;">
-        <span style="margin-right: 15px; font-weight: bold; color: #3d246c;">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <span style="font-weight: bold; color: #3d246c;">
             <g:if test="${currentUser}">${currentUser.username}</g:if>
         </span>
         <form method="post" action="${request.contextPath}/logout" style="display:inline;">
-            <button type="submit" class="btn btn-danger" style="padding:8px 16px;border:1px solid #a663cc;border-radius:5px;font-size:14px;background-color:#a663cc;color:#fff;cursor:pointer;transition:background-color 0.3s;">Log Out</button>
+            <button type="submit" class="btn btn-danger" style="padding:8px 16px; border:1px solid #e53935; border-radius:5px; font-size:14px; background-color:#e53935; color:#fff; cursor:pointer;">Log Out</button>
         </form>
     </div>
 </div>
+
 
 <form method="get" action="${createLink(controller: 'calendar', action: 'index')}" style="display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px 0;">
     <label for="year">Año:</label>
@@ -42,15 +53,43 @@
 </form>
 
 <h1 style="text-align:center;">Calendario del Mes</h1>
+
 <div class="calendar-flex">
-    <!-- Flecha izquierda -->
+    <%-- Flecha izquierda --%>
     <div class="arrow-block">
-        <form method="get" action="${createLink(controller: 'calendar', action: 'index')}" style="height: 100%; display: flex; align-items: center; justify-content: center;">
-            <input type="hidden" name="year" value="${selectedMonth == 1 ? selectedYear - 1 : selectedYear}"/>
-            <input type="hidden" name="month" value="${selectedMonth == 1 ? 12 : selectedMonth - 1}"/>
-            <input type="hidden" name="country" value="${selectedCountry}"/>
-            <button type="submit" class="arrow-btn">&#8592;</button>
-        </form>
+        <g:if test="${viewType == 'week'}">
+        <%-- Si estamos en la primera semana, al retroceder cambiamos de mes y week=última semana del mes anterior --%>
+            <g:if test="${weekIndex == 0}">
+                <form method="get" action="${createLink(controller: 'calendar', action: 'index')}" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                    <input type="hidden" name="view" value="week"/>
+                    <input type="hidden" name="country" value="${selectedCountry}"/>
+                    <g:set var="prevMonth" value="${selectedMonth == 1 ? 12 : selectedMonth - 1}"/>
+                    <g:set var="prevYear" value="${selectedMonth == 1 ? selectedYear - 1 : selectedYear}"/>
+                    <input type="hidden" name="year" value="${prevYear}"/>
+                    <input type="hidden" name="month" value="${prevMonth}"/>
+                    <input type="hidden" name="week" value="-1"/><!-- El backend debe interpretar -1 como última semana -->
+                    <button type="submit" class="arrow-btn">&#8592;</button>
+                </form>
+            </g:if>
+            <g:else>
+                <form method="get" action="${createLink(controller: 'calendar', action: 'index')}" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                    <input type="hidden" name="year" value="${selectedYear}"/>
+                    <input type="hidden" name="month" value="${selectedMonth}"/>
+                    <input type="hidden" name="country" value="${selectedCountry}"/>
+                    <input type="hidden" name="view" value="week"/>
+                    <input type="hidden" name="week" value="${weekIndex - 1}"/>
+                    <button type="submit" class="arrow-btn">&#8592;</button>
+                </form>
+            </g:else>
+        </g:if>
+        <g:else>
+            <form method="get" action="${createLink(controller: 'calendar', action: 'index')}" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                <input type="hidden" name="year" value="${selectedMonth == 1 ? selectedYear - 1 : selectedYear}"/>
+                <input type="hidden" name="month" value="${selectedMonth == 1 ? 12 : selectedMonth - 1}"/>
+                <input type="hidden" name="country" value="${selectedCountry}"/>
+                <button type="submit" class="arrow-btn">&#8592;</button>
+            </form>
+        </g:else>
     </div>
 
     <div class="calendar-table-container">
@@ -125,14 +164,41 @@
         </table>
     </div>
 
-    <!-- Flecha derecha -->
+    <%-- Flecha derecha --%>
     <div class="arrow-block">
-        <form method="get" action="${createLink(controller: 'calendar', action: 'index')}" style="height: 100%; display: flex; align-items: center; justify-content: center;">
-            <input type="hidden" name="year" value="${selectedMonth == 12 ? selectedYear + 1 : selectedYear}"/>
-            <input type="hidden" name="month" value="${selectedMonth == 12 ? 1 : selectedMonth + 1}"/>
-            <input type="hidden" name="country" value="${selectedCountry}"/>
-            <button type="submit" class="arrow-btn">&#8594;</button>
-        </form>
+        <g:if test="${viewType == 'week'}">
+        <%-- Si estamos en la última semana, al avanzar cambiamos de mes y week=0 --%>
+            <g:if test="${weekIndex == totalWeeks - 1}">
+                <form method="get" action="${createLink(controller: 'calendar', action: 'index')}" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                    <input type="hidden" name="view" value="week"/>
+                    <input type="hidden" name="country" value="${selectedCountry}"/>
+                    <g:set var="nextMonth" value="${selectedMonth == 12 ? 1 : selectedMonth + 1}"/>
+                    <g:set var="nextYear" value="${selectedMonth == 12 ? selectedYear + 1 : selectedYear}"/>
+                    <input type="hidden" name="year" value="${nextYear}"/>
+                    <input type="hidden" name="month" value="${nextMonth}"/>
+                    <input type="hidden" name="week" value="0"/>
+                    <button type="submit" class="arrow-btn">&#8594;</button>
+                </form>
+            </g:if>
+            <g:else>
+                <form method="get" action="${createLink(controller: 'calendar', action: 'index')}" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                    <input type="hidden" name="year" value="${selectedYear}"/>
+                    <input type="hidden" name="month" value="${selectedMonth}"/>
+                    <input type="hidden" name="country" value="${selectedCountry}"/>
+                    <input type="hidden" name="view" value="week"/>
+                    <input type="hidden" name="week" value="${weekIndex + 1}"/>
+                    <button type="submit" class="arrow-btn">&#8594;</button>
+                </form>
+            </g:else>
+        </g:if>
+        <g:else>
+            <form method="get" action="${createLink(controller: 'calendar', action: 'index')}" style="height: 100%; display: flex; align-items: center; justify-content: center;">
+                <input type="hidden" name="year" value="${selectedMonth == 12 ? selectedYear + 1 : selectedYear}"/>
+                <input type="hidden" name="month" value="${selectedMonth == 12 ? 1 : selectedMonth + 1}"/>
+                <input type="hidden" name="country" value="${selectedCountry}"/>
+                <button type="submit" class="arrow-btn">&#8594;</button>
+            </form>
+        </g:else>
     </div>
 </div>
 
@@ -157,8 +223,43 @@
         <button type="button" id="deleteEventBtn" style="background:#ffb56b;">Eliminar/Abandonar</button>
         <button type="button" onclick="closeModal()">Cancelar</button><br>
         <div id="inviteField">
-            <label for="modalEventGuest">Invitar usuario (correo):</label>
-            <input type="email" name="guestEmail" id="modalEventGuest" placeholder="usuario@correo.com"/><br>
+            <label for="modalEventGuest">Invitar contacto:</label>
+            <select name="guestEmail" id="modalEventGuest">
+                <option value="">-- Selecciona un contacto --</option>
+                <g:each in="${contacts}" var="contact">
+                    <option value="${contact.username}">${contact.username}</option>
+                </g:each>
+            </select><br>
+        </div>
+    </form>
+</div><!-- Modal para editar/eliminar/abandonar evento -->
+<div id="eventModal" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-30%); background:#fff6e0; border:2px solid #a663cc; border-radius:10px; padding:20px; z-index:1000;">
+    <form id="editEventForm" method="post">
+        <input type="hidden" name="id" id="modalEventId"/>
+        <input type="hidden" id="modalEventIsOwner"/>
+        <div id="editFields">
+            <label for="modalEventTitle">Título:</label>
+            <input type="text" name="title" id="modalEventTitle" required/><br>
+            <label for="modalEventDate">Fecha:</label>
+            <input type="date" name="date" id="modalEventDate" required/><br>
+            <button type="submit">Guardar</button>
+        </div>
+        <div id="viewFields" style="display:none;">
+            <label>Título:</label>
+            <span id="modalEventTitleView"></span><br>
+            <label>Fecha:</label>
+            <span id="modalEventDateView"></span><br>
+        </div>
+        <button type="button" id="deleteEventBtn" style="background:#ffb56b;">Eliminar/Abandonar</button>
+        <button type="button" onclick="closeModal()">Cancelar</button><br>
+        <div id="inviteField">
+            <label for="modalEventGuest">Invitar contacto:</label>
+            <select name="guestEmail" id="modalEventGuest">
+                <option value="">-- Selecciona un contacto --</option>
+                <g:each in="${contacts}" var="contact">
+                    <option value="${contact.username}">${contact.username}</option>
+                </g:each>
+            </select><br>
         </div>
     </form>
 </div>
@@ -173,6 +274,7 @@
     function openModal(eventData) {
         const isOwner = eventData.isOwner;
         document.getElementById('modalEventIsOwner').value = isOwner;
+        document.getElementById('modalEventId').value = eventData.id; // Asigna el id correctamente
         if (isOwner) {
             document.getElementById('editFields').style.display = '';
             document.getElementById('inviteField').style.display = '';
@@ -301,18 +403,19 @@ form button:hover {
 }
 
 .arrow-block {
-    background: #a663cc;
+    background: #ffb56b;
     height: 100%;
-    min-width: 60px;
+    min-width: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0;
 }
 .arrow-btn {
     background: none;
     border: none;
-    font-size: 48px;
-    color: #fff;
+    font-size: 32px;
+    color: #3d246c;
     cursor: pointer;
     height: 100%;
     width: 100%;
@@ -320,9 +423,10 @@ form button:hover {
     align-items: center;
     justify-content: center;
     transition: background 0.2s;
+    padding: 0;
 }
 .arrow-btn:hover {
-    background: #8a4bb8;
+    background: #ff924c;
 }
 
 .calendar-table-container {

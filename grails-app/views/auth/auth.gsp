@@ -73,10 +73,24 @@
     .login__signup a:hover {
         text-decoration: underline;
     }
+    .alert-error {
+        background: #ffe0e0;
+        color: #e53935;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        text-align: center;
+        font-weight: bold;
+    }
     </style>
 </head>
 <body>
 <h1>Iniciar Sesión</h1>
+<g:if test="${params.login_error}">
+    <div class="alert-error" style="background:#ffe0e0;color:#e53935;padding:10px;border-radius:5px;margin-bottom:10px;text-align:center;">
+        Correo o contraseña incorrectos.
+    </div>
+</g:if>
 <form action="${request.contextPath}/login/authenticate" method="POST" id="loginForm" autocomplete="off">
     <label for="username">Correo Electrónico:</label>
     <input type="email" id="username" name="username" placeholder="Email" required autofocus />
@@ -95,11 +109,5 @@
         <g:link controller="auth" action="create">Regístrate aquí</g:link>
     </p>
 </form>
-
-<p class="login__signup">
-    Usuario1: <strong>admin@cal.dev</strong><br>
-    Usuario2: <strong>user@cal.dev</strong><br>
-    Contraseña: <strong>1234</strong>
-</p>
 </body>
 </html>

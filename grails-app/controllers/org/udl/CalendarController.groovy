@@ -12,6 +12,8 @@ class CalendarController {
         def month = params.int('month') ?: new Date().month + 1
         def country = params.country ?: 'ES'
         def city = country == 'AD' ? 'Andorra' : 'Barcelona'
+        def viewType = params.view ?: 'month'
+        def weekParam = params.int('week')
 
         def holidays = nagerDateService.getHolidaysForCurrentMonth(country, year, month) ?: []
         def weatherByDate = openMeteoService.getWeatherForMonth(city, year, month)
@@ -29,19 +31,13 @@ class CalendarController {
             redirect(controller: 'auth', action: 'auth')
             return
         }
-        def startDate = LocalDate.of(year, month, 1)
-        def endDate = LocalDate.of(year, month, daysInMonth)
+        def startDate = java.time.LocalDate.of(year, month, 1)
+        def endDate = java.time.LocalDate.of(year, month, daysInMonth)
 
-        // 1. Eventos donde el usuario es propietario
         def ownerEvents = Event.findAllByUserAndDateBetween(user, startDate, endDate)
-
-        // 2. Eventos donde el usuario es invitado (filtrado en memoria)
         def possibleGuestEvents = Event.findAllByDateBetween(startDate, endDate)
         def guestEvents = possibleGuestEvents.findAll { it.guests*.id.contains(user.id) }
-
-        // 3. Unir y eliminar duplicados
         def events = (ownerEvents + guestEvents).unique()
-
         def eventsByDate = events.groupBy { it.date.toString() }
 
         (1..daysInMonth).each { day ->
@@ -68,6 +64,26 @@ class CalendarController {
             }
         }
 
+        // Si la vista es semana, filtra la semana correspondiente
+        int weekIndex = 0
+        if (viewType == 'week') {
+            if (weekParam != null) {
+                if (weekParam == -1) {
+                    weekIndex = weeks.size() - 1
+                } else if (weekParam >= 0 && weekParam < weeks.size()) {
+                    weekIndex = weekParam
+                }
+            } else {
+                // Por defecto, semana actual si es el mes actual, si no la primera
+                def today = new Date()
+                if (year == today.year + 1900 && month == today.month + 1) {
+                    def idx = weeks.findIndexOf { w -> w.any { d -> d?.day == today.date } }
+                    if (idx >= 0) weekIndex = idx
+                }
+            }
+            weeks = [weeks[weekIndex]]
+        }
+
         render(view: 'index', model: [
                 calendar: calendar,
                 weeks: weeks,
@@ -75,7 +91,11 @@ class CalendarController {
                 selectedMonth: month,
                 selectedCountry: country,
                 events: events,
-                currentUser: user
+                currentUser: user,
+                viewType: viewType,
+                weekIndex: weekIndex,
+                totalWeeks: weeks.size(),
+                contacts: user.contacts
         ])
     }
 }

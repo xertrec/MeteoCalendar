@@ -59,6 +59,8 @@ grails:
         auth:
           loginFormUrl: '/auth/auth'
           postOnly: true
+        failureHandler:
+          defaultFailureUrl: /auth/auth?login_error=1
       controllerAnnotations:
         staticRules:
           - pattern: '/'

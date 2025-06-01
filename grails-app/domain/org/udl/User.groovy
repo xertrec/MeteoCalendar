@@ -20,6 +20,12 @@ class User implements Serializable {
     boolean accountLocked = false
     boolean passwordExpired = false
 
+    // Relación de contactos
+    Set<User> contacts = []
+    static hasMany = [contacts: User]
+    static mappedBy = [contacts: 'none']
+
+    // Relación de roles
     Date lastLogin
     Integer loginCount = 0
     Set<Role> authorities

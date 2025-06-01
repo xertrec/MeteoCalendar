@@ -47,3 +47,6 @@ grails.plugin.springsecurity.failureHandler.exceptionMappings = [
         [exception: org.springframework.security.authentication.DisabledException.name,           url: '/user/accountDisabled'],
         [exception: org.springframework.security.authentication.CredentialsExpiredException.name, url: '/user/passwordExpired']
 ]
+
+grails.plugin.springsecurity.auth.loginFormUrl = '/auth/auth'
+grails.plugin.springsecurity.failureHandler.defaultFailureUrl = '/auth/auth?login_error=1'
