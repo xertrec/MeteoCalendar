@@ -113,13 +113,14 @@ class ContactController {
         def messages = Message.findAll {
             (sender == currentUser && receiver == contact) ||
                     (sender == contact && receiver == currentUser)
-        }
+        }.sort { it.sentAt }
 
         def messageList = messages.collect { msg ->
             [
                     content: msg.content,
                     isSent: msg.sender.id == currentUser.id,
-                    time: msg.formattedTime
+                    time: msg.sentAt.format(java.time.format.DateTimeFormatter.ofPattern('HH:mm')),
+                    date: msg.sentAt.format(java.time.format.DateTimeFormatter.ofPattern('d MMMM yyyy'))
             ]
         }
 

@@ -11,12 +11,6 @@ class EventController {
     def save() {
         def user = springSecurityService.currentUser
         def eventDate = LocalDate.parse(params.date)
-        def existingEvents = Event.countByUserAndDate(user, eventDate)
-        if (existingEvents >= 4) {
-            flash.message = "Solo puedes tener hasta 6 eventos por día."
-            redirect(controller: 'calendar', action: 'index')
-            return
-        }
         def event = new Event(
                 title: params.title,
                 date: eventDate,
@@ -67,5 +61,16 @@ class EventController {
             event.save(flush: true)
         }
         redirect(controller: 'calendar', action: 'index')
+    }
+
+    def getGuests() {
+        def event = Event.get(params.id)
+        if (event && event.user == springSecurityService.currentUser) {
+            render(contentType: 'application/json') {
+                event.guests*.username
+            }
+        } else {
+            render(contentType: 'application/json') { [] }
+        }
     }
 }

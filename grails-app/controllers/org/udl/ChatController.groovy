@@ -13,17 +13,19 @@ class ChatController {
             return
         }
 
-        // Obtener mensajes entre los dos usuarios ordenados por fecha
         def messages = Message.findAll {
             (sender == currentUser && receiver == contact) ||
                     (sender == contact && receiver == currentUser)
         }
         messages.sort { it.sentAt }
 
+        // Agrupar mensajes por fecha
+        def messagesByDate = messages.groupBy { it.sentAt.toLocalDate() }
+
         render(view: 'show', model: [
                 contact: contact,
                 currentUser: currentUser,
-                messages: messages
+                messagesByDate: messagesByDate
         ])
     }
 

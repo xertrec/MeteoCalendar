@@ -127,47 +127,31 @@
                                 <div class="holiday">${day.holiday ?: ''}</div>
                                 <g:if test="${day.events}">
                                     <div class="event-list" style="position:absolute; bottom:30px; left:5px; color:#4a148c; font-size:13px; width:90%;">
-                                        <div style="display: flex;">
-                                            <div style="flex:1;">
-                                                <g:each in="${day.events[0..<(day.events.size() > 2 ? 2 : day.events.size())]}" var="event">
-                                                    <span class="event-title selectable-event"
-                                                          data-event-id="${event.id}"
-                                                          data-event-title="${event.title}"
-                                                          data-event-date="${event.date}"
-                                                          data-event-is-owner="${event.user.id == currentUser?.id ? 'true' : 'false'}"
-                                                          style="cursor:pointer; user-select:text; background-color: ${event.user.id == currentUser?.id ? '#a663cc' : '#ff924c'}; color: white; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 2px;">
-                                                        ${event.title}
-                                                        <g:if test="${event.user.id == currentUser?.id}">
-                                                            <g:if test="${event.guests}">
-                                                                <span style="font-size: 10px; display: block; opacity: 0.8;">
-                                                                    Invitados: ${event.guests.collect { it.username }.join(', ')}
-                                                                </span>
-                                                            </g:if>
+                                        <g:each in="${day.events}" var="event">
+                                            <span class="event-title selectable-event"
+                                                  data-event-id="${event.id}"
+                                                  data-event-title="${event.title}"
+                                                  data-event-date="${event.date}"
+                                                  data-event-is-owner="${event.user.id == currentUser?.id ? 'true' : 'false'}"
+                                                  style="cursor:pointer; user-select:text; background-color: ${event.user.id == currentUser?.id ? '#a663cc' : '#ff924c'}; color: white; padding: 2px 6px; border-radius: 4px; display: block; margin-bottom: 2px; width: 100%; box-sizing: border-box;">
+                                                ${event.title}
+                                                <g:if test="${event.user.id == currentUser?.id}">
+                                                    <g:if test="${event.guests}">
+                                                        <span style="font-size: 10px; display: block; opacity: 0.8;">
+                                                            Invitados: ${event.guests.collect { it.username }.join(', ')}
+                                                        </span>
+                                                    </g:if>
+                                                </g:if>
+                                                <g:else>
+                                                    <span style="font-size: 10px; display: block; opacity: 0.8;">
+                                                        ${event?.user?.username ?: 'Desconocido'}
+                                                        <g:if test="${event?.guests}">
+                                                            <br/>${event.guests*.username.findAll().join(', ')}
                                                         </g:if>
-                                                        <g:else>
-                                                            <span style="font-size: 10px; display: block; opacity: 0.8;">
-                                                                ${event?.user?.username ?: 'Desconocido'}
-                                                                <g:if test="${event?.guests}">
-                                                                    <br/>${event.guests*.username.findAll().join(', ')}
-                                                                </g:if>
-                                                            </span>
-                                                        </g:else>
-                                                    </span><br/>
-                                                </g:each>
-                                            </div>
-                                            <div style="flex:1;">
-                                                <g:each in="${day.events.size() > 2 ? day.events[2..<(day.events.size() > 4 ? 4 : day.events.size())] : []}" var="event">
-                                                    <span class="event-title selectable-event"
-                                                          data-event-id="${event.id}"
-                                                          data-event-title="${event.title}"
-                                                          data-event-date="${event.date}"
-                                                          data-event-is-owner="${event.user.id == currentUser?.id ? 'true' : 'false'}"
-                                                          style="cursor:pointer; user-select:text;">
-                                                        📌 ${event.title}
-                                                    </span><br/>
-                                                </g:each>
-                                            </div>
-                                        </div>
+                                                    </span>
+                                                </g:else>
+                                            </span>
+                                        </g:each>
                                     </div>
                                 </g:if>
                             </g:if>
@@ -218,67 +202,43 @@
 </div>
 
 <!-- Modal para editar/eliminar/abandonar evento -->
-<div id="eventModal" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-30%); background:#fff6e0; border:2px solid #a663cc; border-radius:10px; padding:20px; z-index:1000;">
-    <form id="editEventForm" method="post">
+<div id="eventModal" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-30%); background:#fff6e0; border:2px solid #a663cc; border-radius:10px; padding:20px; z-index:1000; min-width: 300px;">
+    <form id="editEventForm" method="post" style="display: flex; flex-direction: column; gap: 15px;">
         <input type="hidden" name="id" id="modalEventId"/>
         <input type="hidden" id="modalEventIsOwner"/>
-        <div id="editFields">
+
+        <div id="editFields" style="flex: 1;">
             <label for="modalEventTitle">Título:</label>
-            <input type="text" name="title" id="modalEventTitle" required/><br>
+            <input type="text" name="title" id="modalEventTitle" required style="width: 100%; margin-bottom: 10px;"/><br>
             <label for="modalEventDate">Fecha:</label>
-            <input type="date" name="date" id="modalEventDate" required/><br>
-            <button type="submit">Guardar</button>
+            <input type="date" name="date" id="modalEventDate" required style="width: 100%;"/><br>
         </div>
-        <div id="viewFields" style="display:none;">
+
+        <div id="viewFields" style="display:none; flex: 1;">
             <label>Título:</label>
             <span id="modalEventTitleView"></span><br>
             <label>Fecha:</label>
             <span id="modalEventDateView"></span><br>
         </div>
-        <button type="button" id="deleteEventBtn" style="background:#ffb56b;">Eliminar/Abandonar</button>
-        <button type="button" onclick="closeModal()">Cancelar</button><br>
-        <div id="inviteField">
+
+        <div id="inviteField" style="flex: 1;">
             <label for="modalEventGuest">Invitar contacto:</label>
-            <select name="guestEmail" id="modalEventGuest">
+            <select name="guestEmail" id="modalEventGuest" style="width: 100%;">
                 <option value="">-- Selecciona un contacto --</option>
                 <g:each in="${contacts}" var="contact">
                     <option value="${contact.username}">${contact.username}</option>
                 </g:each>
-            </select><br>
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: auto; border-top: 1px solid #e0c3fc; padding-top: 15px;">
+            <button type="button" id="deleteEventBtn" style="background:#e53935; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">Eliminar/Abandonar</button>
+            <button type="submit" id="saveEventBtn" style="background:#a663cc; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">Guardar</button>
+            <button type="button" onclick="closeModal()" style="background:#ffb56b; color: #3d246c; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">Cancelar</button>
         </div>
     </form>
 </div>
-<!-- Modal para editar/eliminar/abandonar evento -->
-<div id="eventModal" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-30%); background:#fff6e0; border:2px solid #a663cc; border-radius:10px; padding:20px; z-index:1000;">
-    <form id="editEventForm" method="post">
-        <input type="hidden" name="id" id="modalEventId"/>
-        <input type="hidden" id="modalEventIsOwner"/>
-        <div id="editFields">
-            <label for="modalEventTitle">Título:</label>
-            <input type="text" name="title" id="modalEventTitle" required/><br>
-            <label for="modalEventDate">Fecha:</label>
-            <input type="date" name="date" id="modalEventDate" required/><br>
-            <button type="submit">Guardar</button>
-        </div>
-        <div id="viewFields" style="display:none;">
-            <label>Título:</label>
-            <span id="modalEventTitleView"></span><br>
-            <label>Fecha:</label>
-            <span id="modalEventDateView"></span><br>
-        </div>
-        <button type="button" id="deleteEventBtn" style="background:#ffb56b;">Eliminar/Abandonar</button>
-        <button type="button" onclick="closeModal()">Cancelar</button><br>
-        <div id="inviteField">
-            <label for="modalEventGuest">Invitar contacto:</label>
-            <select name="guestEmail" id="modalEventGuest">
-                <option value="">-- Selecciona un contacto --</option>
-                <g:each in="${contacts}" var="contact">
-                    <option value="${contact.username}">${contact.username}</option>
-                </g:each>
-            </select><br>
-        </div>
-    </form>
-</div>
+
 <div id="modalOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.2); z-index:999;" onclick="closeModal()"></div>
 
 <script>
@@ -290,20 +250,26 @@
     function openModal(eventData) {
         const isOwner = eventData.isOwner;
         document.getElementById('modalEventIsOwner').value = isOwner;
-        document.getElementById('modalEventId').value = eventData.id; // Asigna el id correctamente
+        document.getElementById('modalEventId').value = eventData.id;
+
         if (isOwner) {
             document.getElementById('editFields').style.display = '';
             document.getElementById('inviteField').style.display = '';
             document.getElementById('viewFields').style.display = 'none';
             document.getElementById('modalEventTitle').value = eventData.title;
             document.getElementById('modalEventDate').value = eventData.date;
+            // Mostrar el botón de guardar solo si es propietario
+            document.getElementById('saveEventBtn').style.display = '';
         } else {
             document.getElementById('editFields').style.display = 'none';
             document.getElementById('inviteField').style.display = 'none';
             document.getElementById('viewFields').style.display = '';
             document.getElementById('modalEventTitleView').textContent = eventData.title;
             document.getElementById('modalEventDateView').textContent = eventData.date;
+            // Ocultar el botón de guardar si no es propietario
+            document.getElementById('saveEventBtn').style.display = 'none';
         }
+
         document.getElementById('eventModal').style.display = 'block';
         document.getElementById('modalOverlay').style.display = 'block';
     }
@@ -589,5 +555,30 @@ td .day-number {
     .arrow-btn {
         font-size: 32px;
     }
+}
+#eventModal button {
+    transition: all 0.3s ease;
+}
+
+#eventModal button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+#deleteEventBtn:hover {
+    background-color: #c62828 !important;
+}
+
+#eventModal input, #eventModal select {
+    padding: 8px;
+    border: 1px solid #a663cc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+#eventModal label {
+    display: block;
+    margin-bottom: 5px;
+    color: #3d246c;
 }
 </style>

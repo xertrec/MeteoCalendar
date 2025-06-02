@@ -2,76 +2,81 @@
 <%-- grails-app/views/contact/_chat.gsp --%>
 <div class="chat-contact-name">${contact.username}</div>
 <div class="chat-messages">
-    <g:each in="${messages}" var="msg">
-        <div style="margin: 5px 0; ${msg.sender.id == session.SPRING_SECURITY_CONTEXT?.authentication?.principal?.id ? 'text-align: right; color: #a663cc;' : 'text-align: left; color: #3d246c;'}">
-            <small style="font-size: 0.8em; opacity: 0.7;">
-                ${msg.formattedTime}
-            </small>
-            <div style="background: ${msg.sender.id == session.SPRING_SECURITY_CONTEXT?.authentication?.principal?.id ? '#f3e9ff' : '#ffe0b2'};
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 10px;
-            max-width: 80%;">
-                ${msg.content}
-            </div>
+    <g:each in="${messagesByDate}" var="entry">
+        <div class="date-separator">
+            <span>
+                <g:formatDate date="${entry.key.atStartOfDay().toDate()}" format="d 'de' MMMM, yyyy"/>
+            </span>
         </div>
+        <g:each in="${entry.value}" var="message">
+            <div class="message ${message.sender.id == currentUser.id ? 'sent' : 'received'}">
+                <div class="message-content">
+                    ${message.content}
+                    <span class="message-time">${message.getFormattedTime()}</span>
+                </div>
+            </div>
+        </g:each>
     </g:each>
 </div>
 
 <style>
-.chat-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.date-separator {
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
 }
 
-.chat-header {
-    padding: 15px;
+.date-separator span {
+    background: #fff6e0;
+    padding: 0 10px;
+    color: #a663cc;
+    font-size: 12px;
+}
+
+.date-separator:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e0c3fc;
+    z-index: -1;
+}
+
+.message-time {
+    font-size: 11px;
+    color: #666;
+    margin-left: 8px;
+    float: right;
+}
+
+.message {
+    margin-bottom: 10px;
+}
+
+.message-content {
+    padding: 8px 12px;
+    border-radius: 8px;
+    display: inline-block;
+    max-width: 70%;
+}
+
+.sent .message-content {
     background: #a663cc;
     color: white;
-    border-radius: 8px 8px 0 0;
+    float: right;
 }
 
-.messages-container {
-    flex: 1;
+.received .message-content {
+    background: #e0c3fc;
+    color: #3d246c;
+    float: left;
+}
+
+.chat-messages {
     overflow-y: auto;
     padding: 15px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.chat-input {
-    padding: 15px;
-    border-top: 1px solid #eee;
-}
-
-.chat-input form {
-    display: flex;
-    gap: 10px;
-}
-
-.chat-input input {
-    flex: 1;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-.chat-input button {
-    padding: 8px 16px;
-    background: #ffb56b;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.chat-input button:hover {
-    background: #ff924c;
 }
 </style>
 

@@ -5,41 +5,6 @@
     <title>Contactos</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-    .topbar {
-        background-color: #a663cc;
-        padding: 10px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: white;
-    }
-
-    .topbar-title {
-        font-size: 20px;
-        font-weight: bold;
-        color: white;
-    }
-
-    .topbar-buttons {
-        display: flex;
-        gap: 10px;
-    }
-
-    .topbar-button {
-        background-color: #ffb56b;
-        color: #3d246c;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 5px;
-        cursor: pointer;
-        text-decoration: none;
-        font-weight: bold;
-        transition: background-color 0.3s;
-    }
-
-    .topbar-button:hover {
-        background-color: #ff924c;
-    }
     body {
         font-family: 'Arial', sans-serif;
         background-color: #f3e9ff;
@@ -82,6 +47,7 @@
         box-shadow: 0 2px 4px rgba(166, 99, 204, 0.1);
     }
 
+    /* Lista de contactos */
     .contact-list {
         list-style: none;
         padding: 0;
@@ -108,6 +74,7 @@
         transform: translateX(5px);
     }
 
+    /* Botones de contacto */
     .contact-actions {
         display: flex;
         gap: 1rem;
@@ -137,6 +104,7 @@
         font-size: 0.9rem;
     }
 
+    /* Formulario de agregar contacto */
     .add-contact-form {
         margin-top: 2rem;
         display: flex;
@@ -176,24 +144,7 @@
         transform: translateY(-2px);
     }
 
-    .btn-back {
-        display: inline-block;
-        margin-top: 2rem;
-        color: #3d246c;
-        text-decoration: none;
-        padding: 0.8rem 1.5rem;
-        border-radius: 10px;
-        background: linear-gradient(45deg, #e0c3fc, #f3e9ff);
-        transition: all 0.3s ease;
-        text-align: center;
-        font-weight: 500;
-    }
-
-    .btn-back:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(166, 99, 204, 0.2);
-    }
-
+    /* Modal de chat */
     .chat-modal {
         display: none;
         position: fixed;
@@ -221,6 +172,7 @@
         z-index: 999;
     }
 
+    /* Chat messages */
     .chat-messages {
         height: 400px;
         overflow-y: auto;
@@ -236,36 +188,57 @@
         padding: 0.8rem 1.2rem;
         border-radius: 15px;
         max-width: 80%;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        clear: both;
+        word-wrap: break-word;
     }
 
     .message.sent {
         background: linear-gradient(45deg, #a663cc, #9152b6);
         color: white;
-        margin-left: auto;
+        float: right;
     }
 
     .message.received {
         background: linear-gradient(45deg, #e0c3fc, #d4b4f8);
-        margin-right: auto;
+        float: left;
     }
 
-    .close-button {
+    .message-time {
+        font-size: 11px;
+        opacity: 0.8;
+        margin-left: 8px;
+        display: inline-block;
+    }
+
+    /* Date separator */
+    .date-separator {
+        text-align: center;
+        margin: 20px 0;
+        position: relative;
+        clear: both;
+    }
+
+    .date-separator span {
+        background: #fff6e0;
+        padding: 0 10px;
+        color: #a663cc;
+        font-size: 12px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .date-separator:before {
+        content: '';
         position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        color: #3d246c;
-        cursor: pointer;
-        transition: transform 0.2s ease;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: #e0c3fc;
+        z-index: 0;
     }
 
-    .close-button:hover {
-        transform: scale(1.2);
-    }
-
+    /* Message form */
     .message-form {
         display: flex;
         gap: 1rem;
@@ -300,6 +273,22 @@
     .send-button:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(255, 181, 107, 0.3);
+    }
+
+    .close-button {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #3d246c;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .close-button:hover {
+        transform: scale(1.2);
     }
     </style>
 </head>
@@ -374,17 +363,45 @@
 
     function loadMessages(contactId) {
         fetch('${createLink(controller:"contact", action:"getMessages")}?contactId=' + contactId)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
             .then(messages => {
                 const chatMessages = document.getElementById('chatMessages');
                 chatMessages.innerHTML = '';
-                messages.forEach(message => {
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = 'message ' + (message.isSent ? 'sent' : 'received');
-                    messageDiv.textContent = message.content;
-                    chatMessages.appendChild(messageDiv);
-                });
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                let currentDate = '';
+
+                if (Array.isArray(messages)) {
+                    messages.forEach(message => {
+                        if (message && message.date) {
+                            if (message.date !== currentDate) {
+                                currentDate = message.date;
+                                const dateDiv = document.createElement('div');
+                                dateDiv.className = 'date-separator';
+                                dateDiv.innerHTML = '<span>' + (message.date || '') + '</span>';
+                                chatMessages.appendChild(dateDiv);
+                            }
+
+                            const messageDiv = document.createElement('div');
+                            messageDiv.className = 'message ' + (message.isSent ? 'sent' : 'received');
+                            messageDiv.innerHTML =
+                                '<div class="message-content">' +
+                                (message.content || '') +
+                                '<span class="message-time">' + (message.time || '') + '</span>' +
+                                '</div>';
+                            chatMessages.appendChild(messageDiv);
+                        }
+                    });
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar los mensajes:', error);
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = '<div class="alert">Error al cargar los mensajes</div>';
             });
     }
 
