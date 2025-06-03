@@ -17,7 +17,6 @@ class BootStrap {
         def adminRole = Role.findOrSaveWhere(authority: 'ROLE_ADMIN')
         def userRole = Role.findOrSaveWhere(authority: 'ROLE_USER')
 
-        def adminUser = new User(username: 'admin@roplisp.dev', password: 'changeme', authorities: [adminRole, userRole]).save()
-        def defaultUser = new User(username: 'player@roplisp.dev', password: 'changeme', authorities: [userRole]).save()
+        def adminUser = new User(username: 'a@a.a', password: '1234', authorities: [adminRole, userRole]).save()
     }
 }

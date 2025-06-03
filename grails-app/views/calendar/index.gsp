@@ -31,15 +31,20 @@
 <form method="get" action="${createLink(controller: 'calendar', action: 'index')}" style="display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px 0;">
     <label for="year">Año:</label>
     <select id="year" name="year">
-        <g:each in="${(new Date().year + 1900)..(new Date().year + 1904)}" var="year">
+        <g:each in="${(new Date().year + 1875)..(new Date().year + 1925)}" var="year">
             <option value="${year}" ${year == selectedYear ? 'selected' : ''}>${year}</option>
         </g:each>
     </select>
 
+    <%
+        def monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+    %>
+
     <label for="month">Mes:</label>
     <select id="month" name="month">
         <g:each in="${1..12}" var="month">
-            <option value="${month}" ${month == selectedMonth ? 'selected' : ''}>${month}</option>
+            <option value="${month}" ${month == selectedMonth ? 'selected' : ''}>${monthNames[month - 1]}</option>
         </g:each>
     </select>
 
@@ -47,7 +52,23 @@
     <select id="country" name="country">
         <option value="AD" ${selectedCountry == 'AD' ? 'selected' : ''}>Andorra</option>
         <option value="ES" ${selectedCountry == 'ES' ? 'selected' : ''}>España</option>
+        <option value="FR" ${selectedCountry == 'FR' ? 'selected' : ''}>Francia</option>
+        <option value="DE" ${selectedCountry == 'DE' ? 'selected' : ''}>Alemania</option>
+        <option value="IT" ${selectedCountry == 'IT' ? 'selected' : ''}>Italia</option>
+        <option value="PT" ${selectedCountry == 'PT' ? 'selected' : ''}>Portugal</option>
+        <option value="GB" ${selectedCountry == 'GB' ? 'selected' : ''}>Reino Unido</option>
+        <option value="CA" ${selectedCountry == 'CA' ? 'selected' : ''}>Canadá</option>
+        <option value="US" ${selectedCountry == 'US' ? 'selected' : ''}>Estados Unidos</option>
+        <option value="MX" ${selectedCountry == 'MX' ? 'selected' : ''}>México</option>
+        <option value="AR" ${selectedCountry == 'AR' ? 'selected' : ''}>Argentina</option>
+        <option value="BR" ${selectedCountry == 'BR' ? 'selected' : ''}>Brasil</option>
+        <option value="JP" ${selectedCountry == 'JP' ? 'selected' : ''}>Japón</option>
+        <option value="CN" ${selectedCountry == 'CN' ? 'selected' : ''}>China</option>
+        <option value="RU" ${selectedCountry == 'RU' ? 'selected' : ''}>Rusia</option>
+        <option value="AU" ${selectedCountry == 'AU' ? 'selected' : ''}>Australia</option>
+        <option value="EG" ${selectedCountry == 'EG' ? 'selected' : ''}>Egipto</option>
     </select>
+
 
     <button type="submit">Consultar</button>
 </form>
