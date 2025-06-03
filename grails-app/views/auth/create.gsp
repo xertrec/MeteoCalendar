@@ -96,14 +96,14 @@
         <div class="alert">${flash.message}</div>
     </g:if>
     <g:form action="save" method="POST" useToken="true">
-        <label for="username"><g:message code="user.username.label" /></label>
-        <input type="email" name="username" value="${user?.username}" id="username" placeholder="${message(code: 'user.username.label')}" required />
+        <label for="username">Correo Electrónico</label>
+        <input type="email" name="username" value="${user?.username}" id="username" placeholder="Correo Electrónico"  required />
 
-        <label for="password"><g:message code="user.password.label" /></label>
-        <input type="password" name="password" id="password" placeholder="${message(code: 'user.password.label')}" required />
+        <label for="password">Contraseña</label>
+        <input type="password" name="password" id="password" placeholder=Contraseña required />
 
-        <label for="password2"><g:message code="user.password.label" /> (de nuevo)</label>
-        <input type="password" name="password2" id="password2" placeholder="${message(code: 'user.password.label')}" required />
+        <label for="password2">Contraseña (de nuevo)</label>
+        <input type="password" name="password2" id="password2" placeholder="Contraseña" required />
 
         <button type="submit">Registrarse</button>
     </g:form>
