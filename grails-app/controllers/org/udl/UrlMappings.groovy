@@ -17,6 +17,9 @@ class UrlMappings {
         "/contact/sendMessage"(controller: 'contact', action: 'sendMessage') {
             method = ["GET", "POST"]
         }
+        "/event/sendEventMessage"(controller: 'event', action: 'sendEventMessage')
+        "/event/getEventMessages"(controller: 'event', action: 'getEventMessages')
+
         "500"(view:'/error')
         "404"(view:'/notFound')
 

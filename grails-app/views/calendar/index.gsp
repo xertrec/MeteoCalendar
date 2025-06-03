@@ -202,11 +202,12 @@
 </div>
 
 <!-- Modal para editar/eliminar/abandonar evento -->
-<div id="eventModal" style="display:none; position:fixed; top:30%; left:50%; transform:translate(-50%,-30%); background:#fff6e0; border:2px solid #a663cc; border-radius:10px; padding:20px; z-index:1000; min-width: 300px;">
+<div id="eventModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff6e0; border:2px solid #a663cc; border-radius:10px; padding:20px; z-index:1000; min-width: 400px; max-width: 600px; max-height: 80vh; overflow-y: auto;">
     <form id="editEventForm" method="post" style="display: flex; flex-direction: column; gap: 15px;">
         <input type="hidden" name="id" id="modalEventId"/>
         <input type="hidden" id="modalEventIsOwner"/>
 
+        <!-- Sección de detalles del evento -->
         <div id="editFields" style="flex: 1;">
             <label for="modalEventTitle">Título:</label>
             <input type="text" name="title" id="modalEventTitle" required style="width: 100%; margin-bottom: 10px;"/><br>
@@ -231,9 +232,21 @@
             </select>
         </div>
 
+        <!-- Nueva sección de chat -->
+        <div class="chat-section">
+            <h4>Chat del Evento</h4>
+            <div id="eventChatMessages" class="chat-messages"></div>
+            <div class="message-form">
+                <input type="text" id="eventMessageContent" class="message-input"
+                       placeholder="Escribe un mensaje..." required/>
+                <button type="button" onclick="sendEventMessage()" class="send-button">Enviar</button>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
         <div style="display: flex; gap: 10px; justify-content: center; margin-top: auto; border-top: 1px solid #e0c3fc; padding-top: 15px;">
-            <button type="button" id="deleteEventBtn" style="background:#e53935; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">Eliminar/Abandonar</button>
             <button type="submit" id="saveEventBtn" style="background:#a663cc; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">Guardar</button>
+            <button type="button" id="deleteEventBtn" style="background:#e53935; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">Eliminar/Abandonar</button>
             <button type="button" onclick="closeModal()" style="background:#ffb56b; color: #3d246c; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">Cancelar</button>
         </div>
     </form>
@@ -272,6 +285,7 @@
 
         document.getElementById('eventModal').style.display = 'block';
         document.getElementById('modalOverlay').style.display = 'block';
+        loadEventMessages(eventData.id);
     }
 
     document.querySelectorAll('.selectable-event').forEach(span => {
@@ -327,6 +341,56 @@
                 '&guestEmail=' + encodeURIComponent(guestEmail)
         }).then(() => location.reload());
     };
+
+    function loadEventMessages(eventId) {
+        fetch('${createLink(controller:"event", action:"getEventMessages")}?eventId=' + eventId)
+            .then(response => response.json())
+            .then(messages => {
+                const chatMessages = document.getElementById('eventChatMessages');
+                chatMessages.innerHTML = '';
+                let currentDate = '';
+
+                messages.forEach(message => {
+                    if (message.date !== currentDate) {
+                        currentDate = message.date;
+                        const dateDiv = document.createElement('div');
+                        dateDiv.className = 'date-separator';
+                        dateDiv.innerHTML = '<span>' + message.date + '</span>';
+                        chatMessages.appendChild(dateDiv);
+                    }
+
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message ' + (message.isSent ? 'sent' : 'received');
+                    messageDiv.innerHTML =
+                        '<div class="message-content">' +
+                        message.content +
+                        '<span class="message-time">' + message.time + '</span>' +
+                        '</div>';
+                    chatMessages.appendChild(messageDiv);
+                });
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+    }
+
+    function sendEventMessage() {
+        const eventId = document.getElementById('modalEventId').value;
+        const content = document.getElementById('eventMessageContent').value;
+        if (!content.trim()) return;
+
+        const formData = new FormData();
+        formData.append('eventId', eventId);
+        formData.append('content', content);
+
+        fetch('${createLink(controller:"event", action:"sendEventMessage")}', {
+            method: 'POST',
+            body: formData
+        }).then(response => {
+            if (response.ok) {
+                document.getElementById('eventMessageContent').value = '';
+                loadEventMessages(eventId);
+            }
+        });
+    }
 </script>
 
 <style>
@@ -580,5 +644,86 @@ td .day-number {
     display: block;
     margin-bottom: 5px;
     color: #3d246c;
+}
+.chat-section {
+    margin-top: 20px;
+    border-top: 1px solid #e0c3fc;
+    padding-top: 15px;
+}
+
+.chat-messages {
+    height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e0c3fc;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #fff;
+}
+
+.message {
+    margin: 8px 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    max-width: 80%;
+    clear: both;
+}
+
+.message.sent {
+    background: #a663cc;
+    color: white;
+    float: right;
+}
+
+.message.received {
+    background: #f3e9ff;
+    color: #3d246c;
+    float: left;
+}
+
+.date-separator {
+    text-align: center;
+    margin: 15px 0;
+    clear: both;
+    position: relative;
+}
+
+.date-separator span {
+    background: #fff;
+    padding: 0 10px;
+    color: #a663cc;
+    position: relative;
+    z-index: 1;
+    font-size: 0.8em;
+}
+
+.message-form {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.message-input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #e0c3fc;
+    border-radius: 4px;
+}
+
+.send-button {
+    background: #ffb56b;
+    color: #3d246c;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.message-time {
+    font-size: 0.8em;
+    opacity: 0.7;
+    text-align: right;
+    display: inline-block;
+    margin-left: 8px;
+    float: right;
 }
 </style>
