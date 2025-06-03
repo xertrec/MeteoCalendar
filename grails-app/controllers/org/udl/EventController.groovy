@@ -92,7 +92,8 @@ class EventController {
                     content: msg.content,
                     isSent: msg.sender.id == currentUser.id,
                     time: msg.sentAt.format(java.time.format.DateTimeFormatter.ofPattern('HH:mm')),
-                    date: msg.sentAt.format(java.time.format.DateTimeFormatter.ofPattern('d MMMM yyyy'))
+                    date: msg.sentAt.format(java.time.format.DateTimeFormatter.ofPattern('d MMMM yyyy')),
+                    senderEmail: msg.sender.username  // Añadir el email del usuario que envía
             ]
         }
 
@@ -109,9 +110,9 @@ class EventController {
         }
 
         def message = new EventMessage(
-            event: event,
-            sender: currentUser,
-            content: params.content
+                event: event,
+                sender: currentUser,
+                content: params.content
         )
 
         if (message.save(flush: true)) {

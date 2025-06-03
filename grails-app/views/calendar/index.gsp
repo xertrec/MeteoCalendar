@@ -238,7 +238,7 @@
             <div id="eventChatMessages" class="chat-messages"></div>
             <div class="message-form">
                 <input type="text" id="eventMessageContent" class="message-input"
-                       placeholder="Escribe un mensaje..." required/>
+                       placeholder="Escribe un mensaje..."/>
                 <button type="button" onclick="sendEventMessage()" class="send-button">Enviar</button>
             </div>
         </div>
@@ -361,11 +361,19 @@
 
                     const messageDiv = document.createElement('div');
                     messageDiv.className = 'message ' + (message.isSent ? 'sent' : 'received');
-                    messageDiv.innerHTML =
-                        '<div class="message-content">' +
+
+                    let messageHTML = '';
+                    // Mostrar email del usuario solo para mensajes recibidos (no enviados por el usuario actual)
+                    if (!message.isSent && message.senderEmail) {
+                        messageHTML += '<div class="message-username" style="font-size: 11px; color: #666; margin-bottom: 2px; font-weight: bold;">' + message.senderEmail + '</div>';
+                    }
+
+                    messageHTML += '<div class="message-content">' +
                         message.content +
                         '<span class="message-time">' + message.time + '</span>' +
                         '</div>';
+
+                    messageDiv.innerHTML = messageHTML;
                     chatMessages.appendChild(messageDiv);
                 });
                 chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -391,6 +399,14 @@
             }
         });
     }
+
+    // Enviar mensaje al presionar Enter
+    document.getElementById('eventMessageContent').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Evita el comportamiento por defecto del formulario
+            sendEventMessage(); // Envía el mensaje
+        }
+    });
 </script>
 
 <style>
