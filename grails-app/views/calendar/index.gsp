@@ -1,7 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <title>CALENDAR - Month</title>
 
-<!-- Topbar con botones y usuario -->
 <div style="display: flex; justify-content: space-between; align-items: center; width: 80%; margin: 30px auto 0 auto; padding: 10px 0;">
     <div style="display: flex; gap: 10px;">
         <g:link controller="event" action="create" class="btn btn-primary">
@@ -31,7 +30,7 @@
 <form method="get" action="${createLink(controller: 'calendar', action: 'index')}" style="display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px 0;">
     <label for="year">Año:</label>
     <select id="year" name="year">
-        <g:each in="${(new Date().year + 1875)..(new Date().year + 1925)}" var="year">
+        <g:each in="${(new Date().year + 1873)..(new Date().year + 1925)}" var="year">
             <option value="${year}" ${year == selectedYear ? 'selected' : ''}>${year}</option>
         </g:each>
     </select>
@@ -88,8 +87,7 @@
                     <g:set var="prevYear" value="${selectedMonth == 1 ? selectedYear - 1 : selectedYear}"/>
                     <input type="hidden" name="year" value="${prevYear}"/>
                     <input type="hidden" name="month" value="${prevMonth}"/>
-                    <input type="hidden" name="week" value="-1"/><!-- El backend debe interpretar -1 como última semana -->
-                    <button type="submit" class="arrow-btn">&#8592;</button>
+                    <input type="hidden" name="week" value="-1"/><button type="submit" class="arrow-btn">&#8592;</button>
                 </form>
             </g:if>
             <g:else>
@@ -222,13 +220,11 @@
     </div>
 </div>
 
-<!-- Modal para editar/eliminar/abandonar evento -->
 <div id="eventModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff6e0; border:2px solid #a663cc; border-radius:10px; padding:20px; z-index:1000; min-width: 400px; max-width: 600px; max-height: 80vh; overflow-y: auto;">
     <form id="editEventForm" method="post" style="display: flex; flex-direction: column; gap: 15px;">
         <input type="hidden" name="id" id="modalEventId"/>
         <input type="hidden" id="modalEventIsOwner"/>
 
-        <!-- Sección de detalles del evento -->
         <div id="editFields" style="flex: 1;">
             <label for="modalEventTitle">Título:</label>
             <input type="text" name="title" id="modalEventTitle" required style="width: 100%; margin-bottom: 10px;"/><br>
@@ -243,7 +239,7 @@
             <span id="modalEventDateView"></span><br>
         </div>
 
-        <div id="inviteField" style="flex: 1;">
+        <div id="singleGuestField" style="flex: 1;">
             <label for="modalEventGuest">Invitar contacto:</label>
             <select name="guestEmail" id="modalEventGuest" style="width: 100%;">
                 <option value="">-- Selecciona un contacto --</option>
@@ -253,7 +249,16 @@
             </select>
         </div>
 
-        <!-- Nueva sección de chat -->
+        <button type="button" id="toggleMultipleGuestsBtn" style="background:#673ab7; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Invitar múltiples</button>
+        <div id="multipleGuestsContainer" style="display: none; margin-top: 10px;">
+            <label for="modalMultipleGuests">Selecciona contactos para invitar:</label>
+            <select name="multipleGuestEmails" id="modalMultipleGuests" multiple size="5" style="width: 100%; height: 100px;">
+                <g:each in="${contacts}" var="contact">
+                    <option value="${contact.username}">${contact.username}</option>
+                </g:each>
+            </select>
+        </div>
+
         <div class="chat-section">
             <h4>Chat del Evento</h4>
             <div id="eventChatMessages" class="chat-messages"></div>
@@ -264,7 +269,6 @@
             </div>
         </div>
 
-        <!-- Botones de acción -->
         <div style="display: flex; gap: 10px; justify-content: center; margin-top: auto; border-top: 1px solid #e0c3fc; padding-top: 15px;">
             <button type="submit" id="saveEventBtn" style="background:#a663cc; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">Guardar</button>
             <button type="button" id="deleteEventBtn" style="background:#e53935; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">Eliminar/Abandonar</button>
@@ -275,10 +279,83 @@
 
 <div id="modalOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.2); z-index:999;" onclick="closeModal()"></div>
 
+<div style="background-color: #f0f0f0; padding: 20px; margin-top: 50px; border-top: 1px solid #ccc; font-size: 0.9em; color: #555;">
+    <div style="display: flex; justify-content: space-around; text-align: left; flex-wrap: wrap;">
+        <div style="margin-bottom: 20px;">
+            <h4 style="margin-top: 0; margin-bottom: 10px; color: #333;">Suport</h4>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <li style="margin-bottom: 5px;"><a href="#" style="text-decoration: none; color: #555;">Centre d'ajuda</a></li>
+                <li style="margin-bottom: 5px;"><a href="#" style="text-decoration: none; color: #555;">Suport a la docència</a></li>
+                <li style="margin-bottom: 5px;"><a href="#" style="text-decoration: none; color: #555;">Problemes tècnics</a></li>
+            </ul>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <h4 style="margin-top: 0; margin-bottom: 10px; color: #333;">Universitat de Lleida</h4>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <li style="margin-bottom: 5px;"><a href="#" style="text-decoration: none; color: #555;">Avís legal</a></li>
+                <li style="margin-bottom: 5px;"><a href="#" style="text-decoration: none; color: #555;">Protocol de publicació de dades</a></li>
+            </ul>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <h4 style="margin-top: 0; margin-bottom: 10px; color: #333;">Plataforma de calendari virtual</h4>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <li style="margin-bottom: 5px;"><a href="https://shorturl.at/0m2Fx" style="text-decoration: none; color: #555;">Basat en Sakuai</a></li>
+                <li style="margin-bottom: 5px;"><a href="https://shorturl.at/yzBi0" style="text-decoration: none; color: #555;">Copyright 1998-2069 Carnival EX Company</a></li>
+                <li style="margin-bottom: 5px;"><a href="https://shorturl.at/rMiZT" style="text-decoration: none; color: #555;">Versió del muntatge: Sakuai 69-SNAPSHOT - Server sakuai05</a></li>
+                <li style="margin-bottom: 5px;"><a href="https://shorturl.at/vTjDr" style="text-decoration: none; color: #555;">Data del servidor: <span id="serverDateTime"></span></a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
 <script>
+
+    function updateServerTime() {
+        const now = new Date(); // Obtenemos la fecha y hora actual del cliente
+
+        // Usamos Intl.DateTimeFormat para un formato de fecha más robusto y localizado (ej. España)
+        // Puedes ajustar las opciones según tus preferencias
+        const options = {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false // Formato de 24 horas
+        };
+
+        // Formateamos la fecha y hora. 'es-ES' es para el locale de España.
+        const formattedDate = new Intl.DateTimeFormat('es-ES', options).format(now);
+
+        // Actualizamos el contenido del elemento <span> con el ID 'serverDateTime'
+        const serverDateTimeElement = document.getElementById('serverDateTime');
+        if (serverDateTimeElement) { // Verificamos que el elemento existe antes de intentar modificarlo
+            serverDateTimeElement.textContent = formattedDate;
+        } else {
+            console.error("Error: Elemento con ID 'serverDateTime' no encontrado.");
+        }
+    }
+
+    // Aseguramos que el DOM esté completamente cargado antes de ejecutar el script
+    document.addEventListener('DOMContentLoaded', (event) => {
+        updateServerTime(); // Ejecutamos la función una vez al cargar la página para mostrar la hora inicial
+        setInterval(updateServerTime, 1000); // Luego, la ejecutamos cada segundo para mantenerla actualizada
+    });
+
+
     function closeModal() {
         document.getElementById('eventModal').style.display = 'none';
         document.getElementById('modalOverlay').style.display = 'none';
+        // Reset state for single/multiple guest selection
+        document.getElementById('singleGuestField').style.display = 'block';
+        document.getElementById('multipleGuestsContainer').style.display = 'none';
+        document.getElementById('toggleMultipleGuestsBtn').textContent = 'Invitar múltiples';
+        document.getElementById('modalEventGuest').value = ''; // Clear single guest selection
+        // Deselect all options in the multiple guests dropdown
+        Array.from(document.getElementById('modalMultipleGuests').options).forEach(option => {
+            option.selected = false;
+        });
     }
 
     function openModal(eventData) {
@@ -286,21 +363,42 @@
         document.getElementById('modalEventIsOwner').value = isOwner;
         document.getElementById('modalEventId').value = eventData.id;
 
+        // Reset visibility for single/multiple guest selection
+        document.getElementById('singleGuestField').style.display = 'block';
+        document.getElementById('multipleGuestsContainer').style.display = 'none';
+        document.getElementById('toggleMultipleGuestsBtn').textContent = 'Invitar múltiples';
+        document.getElementById('modalEventGuest').value = ''; // Clear single guest selection
+        Array.from(document.getElementById('modalMultipleGuests').options).forEach(option => {
+            option.selected = false;
+        });
+
         if (isOwner) {
             document.getElementById('editFields').style.display = '';
-            document.getElementById('inviteField').style.display = '';
+            document.getElementById('singleGuestField').style.display = 'block'; // Make sure single guest field is visible by default
+            document.getElementById('toggleMultipleGuestsBtn').style.display = 'block'; // Show the toggle button
             document.getElementById('viewFields').style.display = 'none';
             document.getElementById('modalEventTitle').value = eventData.title;
             document.getElementById('modalEventDate').value = eventData.date;
-            // Mostrar el botón de guardar solo si es propietario
             document.getElementById('saveEventBtn').style.display = '';
+
+            // Populate multiple guests dropdown with current guests selected
+            fetch('${createLink(controller:"event", action:"getGuests")}?id=' + eventData.id)
+                .then(response => response.json())
+                .then(currentGuests => {
+                    const select = document.getElementById('modalMultipleGuests');
+                    Array.from(select.options).forEach(option => {
+                        option.selected = currentGuests.includes(option.value);
+                    });
+                });
+
         } else {
             document.getElementById('editFields').style.display = 'none';
-            document.getElementById('inviteField').style.display = 'none';
+            document.getElementById('singleGuestField').style.display = 'none'; // Hide single guest field
+            document.getElementById('toggleMultipleGuestsBtn').style.display = 'none'; // Hide the toggle button
+            document.getElementById('multipleGuestsContainer').style.display = 'none'; // Hide multiple guest field
             document.getElementById('viewFields').style.display = '';
             document.getElementById('modalEventTitleView').textContent = eventData.title;
             document.getElementById('modalEventDateView').textContent = eventData.date;
-            // Ocultar el botón de guardar si no es propietario
             document.getElementById('saveEventBtn').style.display = 'none';
         }
 
@@ -345,21 +443,68 @@
         });
     });
 
+    // Toggle between single and multiple guest selection
+    document.getElementById('toggleMultipleGuestsBtn').addEventListener('click', function() {
+        const singleGuestField = document.getElementById('singleGuestField');
+        const multipleGuestsContainer = document.getElementById('multipleGuestsContainer');
+
+        if (multipleGuestsContainer.style.display === 'none') {
+            multipleGuestsContainer.style.display = 'block';
+            singleGuestField.style.display = 'none'; // Hide single guest dropdown
+            this.textContent = 'Invitar uno'; // Change button text
+            document.getElementById('modalEventGuest').value = ''; // Clear single guest selection
+        } else {
+            multipleGuestsContainer.style.display = 'none';
+            singleGuestField.style.display = 'block'; // Show single guest dropdown
+            this.textContent = 'Invitar múltiples'; // Change button text
+            // Deselect all options in the multiple guests dropdown
+            Array.from(document.getElementById('modalMultipleGuests').options).forEach(option => {
+                option.selected = false;
+            });
+        }
+    });
+
     document.getElementById('editEventForm').onsubmit = function(e) {
         e.preventDefault();
         const isOwner = document.getElementById('modalEventIsOwner').value === "true";
         if (!isOwner) return; // Solo el dueño puede editar
+
         const id = document.getElementById('modalEventId').value;
         const title = document.getElementById('modalEventTitle').value;
         const date = document.getElementById('modalEventDate').value;
-        const guestEmail = document.getElementById('modalEventGuest').value;
+
+        let formData = 'id=' + encodeURIComponent(id) +
+            '&title=' + encodeURIComponent(title) +
+            '&date=' + encodeURIComponent(date);
+
+        // Check which mode is active (single or multiple)
+        const multipleGuestsContainerVisible = document.getElementById('multipleGuestsContainer').style.display === 'block';
+
+        if (multipleGuestsContainerVisible) {
+            // If multiple guests are selected
+            const multipleGuestsSelect = document.getElementById('modalMultipleGuests');
+            const selectedGuestEmails = Array.from(multipleGuestsSelect.options)
+                .filter(option => option.selected)
+                .map(option => option.value);
+            selectedGuestEmails.forEach(email => {
+                formData += '&multipleGuestEmails=' + encodeURIComponent(email);
+            });
+            // Ensure no single guest email is sent if multiple is active
+            formData += '&guestEmail='; // Explicitly send empty for single guest
+        } else {
+            // If single guest is selected
+            const guestEmail = document.getElementById('modalEventGuest').value;
+            if (guestEmail) {
+                formData += '&guestEmail=' + encodeURIComponent(guestEmail);
+            }
+            // Ensure no multiple guest emails are sent if single is active
+            formData += '&multipleGuestEmails='; // Explicitly send empty for multiple guests
+        }
+
         fetch('${createLink(controller:"event", action:"update")}', {
             method: 'POST',
             headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: 'id=' + encodeURIComponent(id) +
-                '&title=' + encodeURIComponent(title) +
-                '&date=' + encodeURIComponent(date) +
-                '&guestEmail=' + encodeURIComponent(guestEmail)
+            body: formData
         }).then(() => location.reload());
     };
 
@@ -522,35 +667,6 @@ form button:hover {
 .calendar-table {
     width: 100%;
     height: 100%;
-    border-collapse: collapse;
-}
-.event-title {
-    font-size: 11px !important;
-    white-space: normal;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    display: inline-block;
-    line-height: 1.2;
-    margin-bottom: 2px;
-}
-
-.event-list {
-    position: absolute;
-    bottom: 30px;
-    left: 5px;
-    max-height: 45%;
-    width: calc(100% - 10px);
-    overflow-y: auto;
-    color: #4a148c;
-    font-size: 13px;
-    padding: 2px;
-}
-
-/* Tabla del calendario */
-table {
-    width: 100%;
-    margin: 0 auto;
     border-collapse: collapse;
     background-color: #fff6e0;
     box-shadow: 0 4px 8px rgba(166, 99, 204, 0.08);

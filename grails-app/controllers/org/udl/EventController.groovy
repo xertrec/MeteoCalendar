@@ -3,6 +3,9 @@ package org.udl
 import grails.converters.JSON
 
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
 class EventController {
 
     def springSecurityService
@@ -32,21 +35,52 @@ class EventController {
         if (event && event.user == springSecurityService.currentUser) {
             event.title = params.title
             event.date = LocalDate.parse(params.date)
-            if (params.guestEmail) {
-                def guest = User.findByUsername(params.guestEmail)
-                if (!guest) {
-                    flash.message = "El usuario invitado no existe."
-                    redirect(controller: 'calendar', action: 'index')
-                    return
-                }
-                if (!event.guests*.id.contains(guest.id)) {
-                    event.addToGuests(guest)
+
+            // Collect all guest emails from both single and multiple select
+            def allGuestEmailsToUpdate = []
+
+            // Add email from single guest dropdown if it's visible and selected
+            if (params.guestEmail && params.guestEmail != "") { // Check for non-empty string
+                allGuestEmailsToUpdate << params.guestEmail
+            }
+
+            // Add emails from multiple guests dropdown if it's visible and selected
+            def multipleGuestEmails = params.list('multipleGuestEmails')
+            if (multipleGuestEmails) {
+                allGuestEmailsToUpdate.addAll(multipleGuestEmails)
+            }
+
+            // Ensure unique emails
+            allGuestEmailsToUpdate = allGuestEmailsToUpdate.unique()
+
+            def currentGuests = event.guests as Set // Convert to Set for easier comparison
+
+            // Remove guests not in the new selection
+            currentGuests.each { existingGuest ->
+                if (!allGuestEmailsToUpdate.contains(existingGuest.username)) {
+                    event.removeFromGuests(existingGuest)
                 }
             }
-            event.save(flush: true, failOnError: true)
+
+            // Add new guests from the selection
+            allGuestEmailsToUpdate.each { email ->
+                def guestToAdd = User.findByUsername(email)
+                if (guestToAdd && !currentGuests.contains(guestToAdd)) {
+                    event.addToGuests(guestToAdd)
+                }
+            }
+
+            if (event.save(flush: true, failOnError: true)) {
+                flash.message = "Evento actualizado correctamente."
+            } else {
+                flash.message = "Error al actualizar el evento."
+            }
+        } else {
+            flash.message = "No tienes permiso para editar este evento."
         }
         redirect(controller: 'calendar', action: 'index')
     }
+
 
     def delete() {
         def event = Event.get(params.id)
@@ -59,7 +93,7 @@ class EventController {
     def leave() {
         def event = Event.get(params.id)
         def user = springSecurityService.currentUser
-        if (event && event.guests*.id.contains(user.id)) {
+        if (event && event.guests.contains(user)) { // Use contains directly with User object
             event.removeFromGuests(user)
             event.save(flush: true)
         }
@@ -68,7 +102,8 @@ class EventController {
 
     def getGuests() {
         def event = Event.get(params.id)
-        if (event && event.user == springSecurityService.currentUser) {
+        // Allow owner or guest to view the guest list
+        if (event && (event.user == springSecurityService.currentUser || event.guests.contains(springSecurityService.currentUser))) {
             render(contentType: 'application/json') {
                 event.guests*.username
             }
@@ -81,7 +116,7 @@ class EventController {
         def event = Event.get(params.eventId)
         def currentUser = springSecurityService.currentUser
 
-        if (!event || (!event.user == currentUser && !event.guests*.id.contains(currentUser.id))) {
+        if (!event || (!event.user == currentUser && !event.guests.contains(currentUser))) {
             render(contentType: 'application/json') { [] }
             return
         }
@@ -91,8 +126,8 @@ class EventController {
             [
                     content: msg.content,
                     isSent: msg.sender.id == currentUser.id,
-                    time: msg.sentAt.format(java.time.format.DateTimeFormatter.ofPattern('HH:mm')),
-                    date: msg.sentAt.format(java.time.format.DateTimeFormatter.ofPattern('d MMMM yyyy')),
+                    time: msg.sentAt.format(DateTimeFormatter.ofPattern('HH:mm')),
+                    date: msg.sentAt.format(DateTimeFormatter.ofPattern('d MMMM')),
                     senderEmail: msg.sender.username  // Añadir el email del usuario que envía
             ]
         }
@@ -106,6 +141,12 @@ class EventController {
 
         if (!event) {
             render status: 404
+            return
+        }
+
+        // Ensure the current user is either the event owner or a guest to send messages
+        if (event.user != currentUser && !event.guests.contains(currentUser)) {
+            render status: 403 // Forbidden
             return
         }
 

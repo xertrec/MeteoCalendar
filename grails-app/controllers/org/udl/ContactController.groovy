@@ -55,11 +55,21 @@ class ContactController {
             return
         }
 
+        // Añadir a contactToAdd en la lista de contactos del currentUser
         currentUser.addToContacts(contactToAdd)
-        if (currentUser.save(flush: true)) {
-            flash.message = "Contacto añadido correctamente"
+        // Añadir a currentUser en la lista de contactos de contactToAdd
+        contactToAdd.addToContacts(currentUser)
+
+        // Guardar ambos usuarios en una transacción para asegurar la consistencia
+        if (currentUser.save(flush: true) && contactToAdd.save(flush: true)) {
+            flash.message = "Contacto añadido correctamente en ambas cuentas"
         } else {
-            flash.message = "Error al agregar el contacto"
+            // Revertir si uno de los guardados falla
+            currentUser.removeFromContacts(contactToAdd)
+            contactToAdd.removeFromContacts(currentUser)
+            currentUser.save() // Intenta guardar para revertir el cambio
+            contactToAdd.save() // Intenta guardar para revertir el cambio
+            flash.message = "Error al agregar el contacto en ambas cuentas"
         }
 
         redirect(action: 'index')
@@ -70,9 +80,21 @@ class ContactController {
         def contactToRemove = User.get(params.id)
 
         if (contactToRemove && currentUser.contacts.contains(contactToRemove)) {
+            // Eliminar de la lista de contactos del currentUser
             currentUser.removeFromContacts(contactToRemove)
-            currentUser.save(flush: true)
-            flash.message = "Contacto eliminado correctamente"
+            // Eliminar de la lista de contactos de contactToRemove
+            contactToRemove.removeFromContacts(currentUser)
+
+            // Guardar ambos usuarios en una transacción para asegurar la consistencia
+            if (currentUser.save(flush: true) && contactToRemove.save(flush: true)) {
+                flash.message = "Contacto eliminado correctamente de ambas cuentas"
+            } else {
+                // Si falla, podrías considerar añadir de nuevo para mantener la consistencia
+                // Aunque en un caso de borrado, si falla uno, lo mejor es que el usuario reintente.
+                flash.message = "Error al eliminar el contacto de ambas cuentas"
+            }
+        } else {
+            flash.message = "El contacto no se encontró o no está en tu lista."
         }
 
         redirect(action: 'index')
